@@ -10,6 +10,8 @@ A local-first, offline-capable progressive web app for preparing, facilitating, 
 
 **[https://shfqrkhn.github.io/CommonGround/](https://shfqrkhn.github.io/CommonGround/)**
 
+![App Screenshot](./screenshot-app.png)
+
 Works in any modern browser. No installation required. Can be installed as a standalone app from your browser's address bar.
 
 ---
