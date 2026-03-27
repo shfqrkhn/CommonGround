@@ -81,4 +81,4 @@ This repository contains the **compiled distribution** (`dist/`) of COMMONGROUND
 
 ## Version
 
-`v0.1.77`
+`v0.1.78`
