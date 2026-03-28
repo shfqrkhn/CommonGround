@@ -278,7 +278,11 @@
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
 
     const systemMsg = messages.find(m => m.role === 'system');
-    const chatMsgs  = messages.filter(m => m.role !== 'system');
+    // Gemini requires contents to start with a user turn; drop any leading assistant messages
+    // (can occur after the initial greeting or at history-trim boundaries).
+    const allChat   = messages.filter(m => m.role !== 'system');
+    const firstUser = allChat.findIndex(m => m.role === 'user');
+    const chatMsgs  = firstUser >= 0 ? allChat.slice(firstUser) : allChat;
 
     const body = {
       ...(systemMsg && { systemInstruction: { parts: [{ text: systemMsg.content }] } }),
