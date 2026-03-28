@@ -354,6 +354,7 @@
     el.id = 'byoai-panel';
     el.setAttribute('role', 'complementary');
     el.setAttribute('aria-label', 'AI Facilitator');
+    el.setAttribute('aria-hidden', 'true');
     el.style.cssText = `
       position:fixed;inset:0 0 0 auto;width:min(400px,100vw);
       background:${C.bg};border-left:1px solid ${C.border};
@@ -726,6 +727,8 @@
     const btn = document.createElement('button');
     btn.id = 'byoai-toggle';
     btn.setAttribute('aria-label', 'Open AI Facilitator');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'byoai-panel');
     btn.setAttribute('title', 'AI Facilitator');
     btn.style.cssText = `
       position:fixed;bottom:22px;right:22px;z-index:99998;
@@ -765,10 +768,22 @@
 
     state.open = !state.open;
     state.panelEl.style.transform = state.open ? 'translateX(0)' : 'translateX(100%)';
+    state.panelEl.setAttribute('aria-hidden', state.open ? 'false' : 'true');
 
-    if (state.open && state.history.length === 0 && !state.settingsOpen) {
-      if (!loadConfig()) { state.settingsOpen = true; renderSettings(); }
-      else loadContextAndGreet();
+    const toggleBtn = document.getElementById('byoai-toggle');
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', state.open ? 'true' : 'false');
+      toggleBtn.setAttribute('aria-label', state.open ? 'Close AI Facilitator' : 'Open AI Facilitator');
+    }
+
+    if (state.open) {
+      if (state.history.length === 0 && !state.settingsOpen) {
+        if (!loadConfig()) { state.settingsOpen = true; renderSettings(); }
+        else loadContextAndGreet();
+      }
+      requestAnimationFrame(() => { document.getElementById('byoai-input')?.focus(); });
+    } else {
+      toggleBtn?.focus();
     }
   }
 
@@ -779,6 +794,13 @@
     document.getElementById('byoai-btn-close').addEventListener('click', () => {
       state.open = false;
       state.panelEl.style.transform = 'translateX(100%)';
+      state.panelEl.setAttribute('aria-hidden', 'true');
+      const toggleBtn = document.getElementById('byoai-toggle');
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
+        toggleBtn.focus();
+      }
     });
 
     document.getElementById('byoai-btn-settings').addEventListener('click', () => {
