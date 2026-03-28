@@ -6,6 +6,7 @@
   "start_url": "/CommonGround/",
   "scope": "/CommonGround/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0f1117",
   "theme_color": "#1a1f2e",
   "orientation": "any",
@@ -37,6 +38,11 @@
       "type": "image/png"
     },
     {
+      "src": "/CommonGround/icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
       "src": "/CommonGround/icons/icon-256.png",
       "sizes": "256x256",
       "type": "image/png"
@@ -52,6 +58,14 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/CommonGround/screenshot-app.png",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "CommonGround facilitation dashboard"
     }
   ]
 }

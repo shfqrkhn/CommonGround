@@ -34,6 +34,15 @@ Omitting this step leaves a stale revision that prevents Workbox from invalidati
 ## 2026-03-28 - [🛡️ Sentinel] - [BYOAI CSP Compatibility]
 **Protocol:** When BYOAI is enabled, CSP `connect-src` must include `https:` (while remaining tightly scoped) or provider API calls and model auto-discovery will fail at runtime.
 
+## 2026-03-28 - [🎨 Palette] - [Cross-Platform PWA Install Assets]
+**Protocol:** A correctly installable PWA requires platform-specific assets beyond the basic manifest icons:
+1. **iOS apple-touch-icon** — must be exactly 180×180 px at `<link rel="apple-touch-icon" sizes="180x180">`. Larger sizes (256px) are silently ignored on some iOS versions.
+2. **iOS splash screens** — `<link rel="apple-touch-startup-image">` with exact `media` queries matching device-width, device-height, device-pixel-ratio, and orientation. Required sizes: 750×1334 (SE), 1170×2532 (14/13/12), 1179×2556 (14 Pro/15/15 Pro), 1284×2778 (14 Plus/13 Pro Max), 1290×2796 (14 Pro Max/15 Pro Max), 1488×2266 (iPad mini 6), 1640×2360 (iPad 10/Air 5), 1668×2388 (iPad Pro 11"), 2048×2732 (iPad Pro 12.9"). Design: `background_color` fill with emoji at 35% of the shorter dimension. Without these, iOS shows a white flash on launch.
+3. **Windows tile** — `<meta name="msapplication-TileImage">` and `<meta name="msapplication-TileColor">` in `<head>` for Windows Start menu tile support.
+4. **Manifest screenshots** — `"screenshots"` array in the manifest with `form_factor: "narrow"` for mobile install prompt quality on Android/Chrome.
+5. **`display_override`** — add `["window-controls-overlay", "standalone"]` for desktop Chromium PWA title-bar integration; falls back gracefully to `display: standalone` on unsupported platforms.
+All splash images and the screenshot must be added to the Workbox precache with full MD5 revisions.
+
 ## 2026-03-28 - [🎨 Palette] - [PWA Icon Source of Truth]
 **Protocol:** PNG files in `icons/` are the canonical PWA icon assets — do not regenerate them from SVG source files. The original `favicon.svg` contained incorrect artwork (a lightning bolt) and has been deleted. The correct icon is the handshake 🤝 emoji rendered from Noto Color Emoji (`/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf`) using Pillow at each required size. If icons ever need to be regenerated, render from the emoji directly — not from any SVG present in the repository. `icons.svg` is a UI sprite sheet for in-app icon glyphs and must not be confused with the app icon.
 
