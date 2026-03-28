@@ -70,15 +70,15 @@ Any modern browser with IndexedDB and Service Worker support: Chrome, Edge, Fire
 
 - **Sovereign** — no backend dependency, no CDN runtime, no external calls in production.
 - **Atomic changes** — every service function is independently testable and side-effect bounded.
-- **Strict CSP** — `connect-src 'self'` only; no inline scripts; no eval.
+- **Strict CSP** — base app remains self-hosted; `connect-src` permits `https:` only for optional BYOAI provider calls; no eval.
 - **Accessible** — WCAG 2.1 AA: keyboard navigable, screen-reader semantic, reduced-motion safe.
 
 ### This Repository
 
-This repository contains the **compiled distribution** (`dist/`) of COMMONGROUND Suite. The source code, test suite, and build toolchain live in the source repository.
+This repository is the **compiled distribution root** of COMMONGROUND Suite (the files served by GitHub Pages). The source code, test suite, and build toolchain live in the separate source repository.
 
 ---
 
 ## Version
 
-`v0.1.90`
+`v0.1.96`

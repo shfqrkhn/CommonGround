@@ -14,6 +14,8 @@
 
   const CONFIG_KEY = 'byoai_config';
   const DB_CACHE_KEY = 'byoai_db_name';
+  const MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
+  const modelListCache = new Map();
 
   const GEMINI_MODELS = [
     { id: 'gemini-2.0-flash',              label: 'Gemini 2.0 Flash (recommended)' },
@@ -418,6 +420,7 @@
         <input type="text" id="byoai-inp-model-custom" placeholder="Or enter a custom model ID"
           value="" style="${inputCSS}" />
         <p style="margin:5px 0 0;font-size:11px;color:${C.muted};">Custom ID overrides the selection above.</p>
+        <p id="byoai-model-status" style="margin:4px 0 0;font-size:11px;color:${C.muted};"></p>
       </div>
 
       <div id="byoai-endpoint-row" style="margin-bottom:14px;">
@@ -448,24 +451,104 @@
     const selModel     = document.getElementById('byoai-sel-model');
     const inpEndpoint  = document.getElementById('byoai-endpoint-row');
     const inpModelCust = document.getElementById('byoai-inp-model-custom');
+    const inpKey       = document.getElementById('byoai-inp-key');
+    const modelStatus  = document.getElementById('byoai-model-status');
+    const inpEndpointUrl = document.getElementById('byoai-inp-endpoint');
+
+    function renderModelOptions(models, preferred) {
+      const prev = preferred || selModel.value;
+      selModel.innerHTML = models.map(m => {
+        const id = m.id || m;
+        const label = m.label || m;
+        return `<option value="${id}" ${prev===id?'selected':''}>${label}</option>`;
+      }).join('');
+    }
+
+    async function discoverModels(provider, apiKey, endpoint) {
+      const keyFingerprint = `${apiKey.length}:${apiKey.slice(0,2)}:${apiKey.slice(-2)}`;
+      const cacheKey = `${provider}|${endpoint || ''}|${keyFingerprint}`;
+      const cached = modelListCache.get(cacheKey);
+      if (cached && (Date.now() - cached.ts) < MODEL_CACHE_TTL_MS) {
+        return cached.models;
+      }
+
+      let models;
+      if (provider === 'gemini') {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Gemini model list error ${res.status}`);
+        const data = await res.json();
+        models = (data.models || [])
+          .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => String(m.name || '').split('/').pop())
+          .filter(Boolean);
+      } else {
+        const base = (endpoint || 'https://api.openai.com/v1').replace(/\/$/, '');
+        const res = await fetch(`${base}/models`, {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+        if (!res.ok) throw new Error(`OpenAI model list error ${res.status}`);
+        const data = await res.json();
+        models = (data.data || []).map(m => m.id).filter(Boolean);
+      }
+      modelListCache.set(cacheKey, { ts: Date.now(), models });
+      return models;
+    }
 
     function syncProvider(provider) {
       const models = provider === 'gemini' ? GEMINI_MODELS : OPENAI_MODELS;
-      selModel.innerHTML = models.map(m =>
-        `<option value="${m.id}" ${cfg.model===m.id?'selected':''}>${m.label}</option>`
-      ).join('');
+      renderModelOptions(models, cfg.model);
       inpEndpoint.style.display = provider === 'openai' ? 'block' : 'none';
     }
 
+    let modelReqId = 0;
+
+    async function autoPopulateModels() {
+      const reqId = ++modelReqId;
+      const provider = selProvider.value;
+      const fallback = provider === 'gemini' ? GEMINI_MODELS : OPENAI_MODELS;
+      const apiKey = inpKey.value.trim();
+      const endpoint = inpEndpointUrl.value.trim();
+      const preferred = selModel.value || cfg.model;
+      syncProvider(provider);
+      if (!apiKey) { modelStatus.textContent = 'Enter API key to auto-load available models.'; return; }
+      modelStatus.textContent = 'Loading models from provider…';
+      try {
+        const models = await discoverModels(provider, apiKey, endpoint);
+        if (reqId !== modelReqId) return;
+        if (models.length === 0) throw new Error('No models returned');
+        renderModelOptions(models, preferred);
+        modelStatus.textContent = `Loaded ${models.length} models from provider.`;
+      } catch (e) {
+        if (reqId !== modelReqId) return;
+        renderModelOptions(fallback, preferred);
+        modelStatus.textContent = `Could not auto-load models (${e?.message || 'unknown error'}). Using defaults.`;
+      }
+    }
+
+    let autoPopulateTimer = null;
+    function scheduleAutoPopulate() {
+      if (autoPopulateTimer !== null) clearTimeout(autoPopulateTimer);
+      autoPopulateTimer = setTimeout(() => {
+        autoPopulateTimer = null;
+        autoPopulateModels();
+      }, 350);
+    }
+
     syncProvider(selProvider.value);
-    selProvider.addEventListener('change', () => syncProvider(selProvider.value));
+    autoPopulateModels();
+    selProvider.addEventListener('change', autoPopulateModels);
+    inpKey.addEventListener('input', scheduleAutoPopulate);
+    inpKey.addEventListener('change', autoPopulateModels);
+    inpEndpointUrl.addEventListener('input', scheduleAutoPopulate);
+    inpEndpointUrl.addEventListener('change', autoPopulateModels);
 
     document.getElementById('byoai-btn-save').addEventListener('click', () => {
       const provider    = selProvider.value;
-      const apiKey      = document.getElementById('byoai-inp-key').value.trim();
+      const apiKey      = inpKey.value.trim();
       const customModel = inpModelCust.value.trim();
       const model       = customModel || selModel.value;
-      const endpoint    = document.getElementById('byoai-inp-endpoint').value.trim();
+      const endpoint    = inpEndpointUrl.value.trim();
 
       if (!apiKey) { alert('Please enter an API key.'); return; }
       if (!model)  { alert('Please select or enter a model ID.'); return; }
