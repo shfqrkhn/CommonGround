@@ -1,4 +1,5 @@
 {
+  "id": "/CommonGround/",
   "name": "COMMONGROUND Suite",
   "short_name": "CommonGround",
   "description": "Facilitator-first human-systems resolution suite. Resolve clearly.",
@@ -7,7 +8,7 @@
   "display": "standalone",
   "background_color": "#0f1117",
   "theme_color": "#1a1f2e",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "/CommonGround/icons/icon-16.png",
