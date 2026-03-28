@@ -16,6 +16,7 @@
   const DB_CACHE_KEY = 'byoai_db_name';
   const MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
   const modelListCache = new Map();
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const GEMINI_MODELS = [
     { id: 'gemini-2.0-flash',              label: 'Gemini 2.0 Flash (recommended)' },
@@ -370,7 +371,7 @@
       display:flex;flex-direction:column;z-index:99999;
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       color:${C.text};box-shadow:-4px 0 32px rgba(0,0,0,0.5);
-      transform:translateX(100%);transition:transform 0.25s ease;
+      transform:translateX(100%);${reducedMotion ? '' : 'transition:transform 0.25s ease;'}
     `;
     el.innerHTML = `
       <div style="padding:max(13px,env(safe-area-inset-top,0px)) 14px 13px;border-bottom:1px solid ${C.border};
@@ -752,17 +753,19 @@
       color:#fff;font-size:22px;
       box-shadow:0 4px 16px rgba(79,142,247,0.45);
       touch-action:manipulation;display:flex;align-items:center;justify-content:center;
-      transition:transform 0.15s ease,box-shadow 0.15s ease;
+      ${reducedMotion ? '' : 'transition:transform 0.15s ease,box-shadow 0.15s ease;'}
     `;
     btn.textContent = '🤝';
-    btn.addEventListener('mouseenter', () => {
-      btn.style.transform = 'scale(1.1)';
-      btn.style.boxShadow = '0 6px 22px rgba(79,142,247,0.65)';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transform = 'scale(1)';
-      btn.style.boxShadow = '0 4px 16px rgba(79,142,247,0.45)';
-    });
+    if (!reducedMotion) {
+      btn.addEventListener('mouseenter', () => {
+        btn.style.transform = 'scale(1.1)';
+        btn.style.boxShadow = '0 6px 22px rgba(79,142,247,0.65)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'scale(1)';
+        btn.style.boxShadow = '0 4px 16px rgba(79,142,247,0.45)';
+      });
+    }
     btn.addEventListener('click', togglePanel);
     return btn;
   }
