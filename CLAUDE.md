@@ -9,7 +9,7 @@
 This is the **compiled distribution repository** for COMMONGROUND Suite, a local-first, offline-capable progressive web app for conflict resolution and structured team conversation facilitation. The source code, TypeScript, tests, and build toolchain live in a **separate private source repository**. This repo contains the built output deployed to GitHub Pages.
 
 **Live app:** https://shfqrkhn.github.io/CommonGround/
-**Current version:** v0.1.103
+**Current version:** v0.1.104
 
 ---
 

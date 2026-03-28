@@ -169,7 +169,7 @@
     if (ctx?.workspace) {
       L.push('', '## Workspace');
       L.push(`- Name: ${ctx.workspace.name || '(unnamed)'}`);
-      if (ctx.workspace.facilitatorName) L.push(`- Facilitator: ${ctx.workspace.facilitatorName}`);
+      if (ctx.workspace.owner) L.push(`- Facilitator: ${ctx.workspace.owner}`);
     }
 
     if (ctx?.matter) {
@@ -178,28 +178,28 @@
       L.push(`- Title: ${m.title || '(untitled)'}`);
       L.push(`- Type: ${m.type || 'unknown'}`);
       L.push(`- Status: ${m.status || 'unknown'}`);
-      if (m.description) L.push(`- Description: ${m.description}`);
+      if (m.suitabilityState) L.push(`- Suitability: ${m.suitabilityState}`);
+      if (m.currentPhase) L.push(`- Current phase: ${m.currentPhase}`);
       if (m.createdAt) L.push(`- Created: ${fmt(m.createdAt)}`);
     }
 
     if (ctx?.participants?.length) {
       L.push('', '## Participants');
       for (const p of ctx.participants) {
-        L.push(`- **${p.name || 'Unknown'}** (${p.role || 'participant'})`);
-        if (p.notes) L.push(`  Notes: ${p.notes}`);
+        L.push(`- **${p.displayName || 'Unknown'}** (${p.role || 'participant'})`);
       }
     }
 
     if (ctx?.intakeRecords?.length) {
       L.push('', '## Intake Records');
       for (const r of ctx.intakeRecords) {
-        const pName = ctx.participants?.find(p => p.id === r.participantId)?.name || 'Unknown';
+        const pName = ctx.participants?.find(p => p.id === r.participantId)?.displayName || 'Unknown';
         L.push(`### ${pName}`);
-        if (r.primaryConcern)    L.push(`- Primary concern: ${r.primaryConcern}`);
-        if (r.desiredOutcome)    L.push(`- Desired outcome: ${r.desiredOutcome}`);
-        if (r.underlyingNeeds)   L.push(`- Underlying needs: ${r.underlyingNeeds}`);
-        if (r.relationshipHistory) L.push(`- Relationship history: ${r.relationshipHistory}`);
-        if (r.safetyFlags)       L.push(`- ⚠ Safety flags: ${r.safetyFlags}`);
+        if (r.responses?.notes)          L.push(`- Notes: ${r.responses.notes}`);
+        if (r.responses?.desiredOutcome) L.push(`- Desired outcome: ${r.responses.desiredOutcome}`);
+        if (r.responses?.constraints)    L.push(`- Constraints: ${r.responses.constraints}`);
+        const triggered = r.riskFlags?.filter(f => f.triggered) || [];
+        if (triggered.length) L.push(`- ⚠ Risk flags: ${triggered.map(f => f.category).join(', ')}`);
       }
     }
 
@@ -210,7 +210,7 @@
         if (!nodes.length) continue;
         L.push(`### ${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority`);
         for (const n of nodes) {
-          L.push(`- ${n.title || n.content || '(no title)'}`);
+          L.push(`- ${n.label || '(no label)'}`);
           if (n.notes) L.push(`  ${n.notes}`);
         }
       }
@@ -222,16 +222,20 @@
       recent.forEach((s, i) => {
         L.push(`### Session ${ctx.sessions.length - recent.length + i + 1}`);
         if (s.phase)  L.push(`- Phase: ${s.phase}`);
+        if (s.date || s.createdAt) L.push(`- Date: ${fmt(s.date || s.createdAt)}`);
+        if (Array.isArray(s.agenda) && s.agenda.length) L.push(`- Agenda: ${s.agenda.join('; ')}`);
         if (s.notes)  L.push(`- Notes: ${s.notes}`);
-        if (s.createdAt) L.push(`- Date: ${fmt(s.createdAt)}`);
       });
     }
 
     if (ctx?.commitments?.length) {
       L.push('', '## Commitments');
       for (const c of ctx.commitments) {
-        L.push(`- [${c.status || 'pending'}] ${c.description || c.title || '(no description)'}`);
-        if (c.owner)   L.push(`  Owner: ${c.owner}`);
+        L.push(`- [${c.status || 'pending'}] ${c.text || '(no text)'}`);
+        if (c.ownerId) {
+          const owner = ctx.participants?.find(p => p.id === c.ownerId)?.displayName || c.ownerId;
+          L.push(`  Owner: ${owner}`);
+        }
         if (c.dueDate) L.push(`  Due: ${fmt(c.dueDate)}`);
       }
     }
@@ -239,8 +243,9 @@
     if (ctx?.followUps?.length) {
       L.push('', '## Follow-up Checkpoints');
       for (const f of ctx.followUps) {
-        L.push(`- ${f.description || f.title || '(no description)'}`);
-        if (f.scheduledDate) L.push(`  Scheduled: ${fmt(f.scheduledDate)}`);
+        L.push(`- Target: ${f.targetDate ? fmt(f.targetDate) : '(no date set)'}`);
+        if (f.result)      L.push(`  Result: ${f.result}`);
+        if (f.completedAt) L.push(`  Completed: ${fmt(f.completedAt)}`);
       }
     }
 

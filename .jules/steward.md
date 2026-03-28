@@ -1,3 +1,14 @@
+## 2026-03-28 - [🤝 BYOAI] - [buildSystemPrompt Schema Field Name Mismatches]
+**Protocol:** `buildSystemPrompt()` in `byoai.js` referenced wrong field names for nearly every entity type, causing the AI to receive only "Unknown" and "(no description)" placeholders instead of the actual case data. Cross-reference `buildSystemPrompt` against the IndexedDB schema defined in the main app bundle before writing or editing it. Confirmed mismatches and fixes:
+- **Workspace**: `facilitatorName` → `owner` (field is `owner` from `ne(name, owner)`)
+- **Matter**: `m.description` (doesn't exist) removed; added `m.suitabilityState` and `m.currentPhase`
+- **Participants**: `p.name` → `p.displayName` (schema stores `displayName`)
+- **Intake records**: fields are nested under `r.responses.*`, not at top level. Correct names: `r.responses.notes` (not `primaryConcern`), `r.responses.desiredOutcome` ✓, `r.responses.constraints` (not `underlyingNeeds`). Risk flags are `r.riskFlags[]` with `.triggered` and `.category` properties — filter for triggered flags only.
+- **Issue nodes**: `n.title || n.content` → `n.label` (schema stores `label`)
+- **Sessions**: added `s.agenda` (array joined with `; `); use `s.date` (schema timestamp) with `s.createdAt` as fallback
+- **Commitments**: `c.description || c.title` → `c.text`; `c.owner` → participant name looked up via `c.ownerId`
+- **Follow-ups**: `f.description || f.title` and `f.scheduledDate` removed (don't exist); use `f.targetDate`, `f.result`, `f.completedAt`
+
 ## 2026-03-28 - [📱 Mobile] - [BYOAI Panel Header Safe-Area Inset Top]
 **Protocol:** The BYOAI panel uses `position:fixed;inset:0 0 0 auto`, anchoring its top edge at y=0. With `viewport-fit=cover` active, this means the panel's header content is positioned under the status bar / notch / Dynamic Island on iPhone X+ in standalone PWA mode. The panel header had `padding:13px 14px` with no top safe-area allowance, hiding the 🤝 title and close/settings buttons behind the status bar. Fix: change header top padding to `max(13px, env(safe-area-inset-top, 0px))` — preserves the minimum visual padding while adding the status-bar height when `viewport-fit:cover` is active. This follows the same pattern as `.app-header` and `.sw-banner` in the main app.
 
