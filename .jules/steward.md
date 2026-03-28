@@ -1,3 +1,9 @@
+## 2026-03-28 - [🛡️ Sentinel] - [innerHTML With User-Supplied Data]
+**Protocol:** In `byoai.js`, `renderSettings()` embedded `cfg.apiKey` and `cfg.endpoint` (arbitrary strings loaded from `localStorage`) directly into an `innerHTML` template literal as HTML attribute values. A `"` character in either value breaks the attribute context and allows injection of arbitrary attributes or elements. Fix: remove user-supplied values from the HTML template entirely and set them via DOM property assignment (`element.value = cfg.apiKey`) after the element is created. Similarly, `renderModelOptions()` embedded API-returned model IDs and labels into `innerHTML` via template literals — these must be set via `option.value` and `option.textContent` using `document.createElement('option')`. Any string originating from user input, `localStorage`, or an external API must never be interpolated directly into an `innerHTML` template.
+
+## 2026-03-28 - [🛡️ Sentinel] - [Dead escHtml After Rendering Model Change]
+**Protocol:** `escHtml()` was introduced in `byoai.js` to escape strings before setting them via `innerHTML`. After the rendering model changed from `innerHTML`/`md2html` to `textContent` (v0.1.97) and error message escaping was removed (v0.1.98), `escHtml` had zero callers and became dead code. Remove it. Retaining a utility function after its use case is eliminated creates false confidence that escaping is still in place. When switching between rendering models (`innerHTML` ↔ `textContent`), audit every call-site of both the renderer and any escaping helpers, and delete helpers that have no remaining callers.
+
 ## 2024-03-28 - [🎨 Palette] - [Mobile Physics]
 **Protocol:** Apply `touch-action: manipulation` to all clickable elements on mobile to prevent zoom-on-tap.
 

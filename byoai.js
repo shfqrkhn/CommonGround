@@ -413,7 +413,7 @@
       <div style="margin-bottom:14px;">
         <label style="display:block;margin-bottom:5px;font-size:12px;color:${C.muted};font-weight:500;" for="byoai-inp-key">API Key</label>
         <input type="password" id="byoai-inp-key" autocomplete="off" spellcheck="false"
-          value="${cfg.apiKey||''}" placeholder="Paste your API key here"
+          placeholder="Paste your API key here"
           style="${inputCSS}" />
         <p style="margin:5px 0 0;font-size:11px;color:${C.muted};line-height:1.4;">
           Stored in your browser only. Sent exclusively to your chosen AI provider.
@@ -434,7 +434,6 @@
           Base URL <span style="font-weight:400;">(OpenAI-compatible)</span>
         </label>
         <input type="url" id="byoai-inp-endpoint"
-          value="${cfg.endpoint||'https://api.openai.com/v1'}"
           placeholder="https://api.openai.com/v1"
           style="${inputCSS}" />
         <p style="margin:5px 0 0;font-size:11px;color:${C.muted};">
@@ -461,13 +460,22 @@
     const modelStatus  = document.getElementById('byoai-model-status');
     const inpEndpointUrl = document.getElementById('byoai-inp-endpoint');
 
+    // Set user-supplied values via DOM to avoid HTML injection via template literals
+    inpKey.value = cfg.apiKey || '';
+    inpEndpointUrl.value = cfg.endpoint || 'https://api.openai.com/v1';
+
     function renderModelOptions(models, preferred) {
       const prev = preferred || selModel.value;
-      selModel.innerHTML = models.map(m => {
-        const id = m.id || m;
-        const label = m.label || m;
-        return `<option value="${id}" ${prev===id?'selected':''}>${label}</option>`;
-      }).join('');
+      selModel.innerHTML = '';
+      for (const m of models) {
+        const id = m.id || String(m);
+        const label = m.label || String(m);
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = label;
+        opt.selected = prev === id;
+        selModel.appendChild(opt);
+      }
     }
 
     async function discoverModels(provider, apiKey, endpoint) {
@@ -580,12 +588,6 @@
   }
 
   // ── Chat view ─────────────────────────────────────────────────────────────
-
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
 
   function renderChat() {
     const body = document.getElementById('byoai-body');
