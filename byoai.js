@@ -16,6 +16,7 @@
   const DB_CACHE_KEY = 'byoai_db_name';
   const MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
   const modelListCache = new Map();
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const GEMINI_MODELS = [
     { id: 'gemini-2.0-flash',              label: 'Gemini 2.0 Flash (recommended)' },
@@ -169,7 +170,7 @@
     if (ctx?.workspace) {
       L.push('', '## Workspace');
       L.push(`- Name: ${ctx.workspace.name || '(unnamed)'}`);
-      if (ctx.workspace.facilitatorName) L.push(`- Facilitator: ${ctx.workspace.facilitatorName}`);
+      if (ctx.workspace.owner) L.push(`- Facilitator: ${ctx.workspace.owner}`);
     }
 
     if (ctx?.matter) {
@@ -178,39 +179,39 @@
       L.push(`- Title: ${m.title || '(untitled)'}`);
       L.push(`- Type: ${m.type || 'unknown'}`);
       L.push(`- Status: ${m.status || 'unknown'}`);
-      if (m.description) L.push(`- Description: ${m.description}`);
+      if (m.suitabilityState) L.push(`- Suitability: ${m.suitabilityState}`);
+      if (m.currentPhase) L.push(`- Current phase: ${m.currentPhase}`);
       if (m.createdAt) L.push(`- Created: ${fmt(m.createdAt)}`);
     }
 
     if (ctx?.participants?.length) {
       L.push('', '## Participants');
       for (const p of ctx.participants) {
-        L.push(`- **${p.name || 'Unknown'}** (${p.role || 'participant'})`);
-        if (p.notes) L.push(`  Notes: ${p.notes}`);
+        L.push(`- **${p.displayName || 'Unknown'}** (${p.role || 'participant'})`);
       }
     }
 
     if (ctx?.intakeRecords?.length) {
       L.push('', '## Intake Records');
       for (const r of ctx.intakeRecords) {
-        const pName = ctx.participants?.find(p => p.id === r.participantId)?.name || 'Unknown';
+        const pName = ctx.participants?.find(p => p.id === r.participantId)?.displayName || 'Unknown';
         L.push(`### ${pName}`);
-        if (r.primaryConcern)    L.push(`- Primary concern: ${r.primaryConcern}`);
-        if (r.desiredOutcome)    L.push(`- Desired outcome: ${r.desiredOutcome}`);
-        if (r.underlyingNeeds)   L.push(`- Underlying needs: ${r.underlyingNeeds}`);
-        if (r.relationshipHistory) L.push(`- Relationship history: ${r.relationshipHistory}`);
-        if (r.safetyFlags)       L.push(`- ⚠ Safety flags: ${r.safetyFlags}`);
+        if (r.responses?.notes)          L.push(`- Notes: ${r.responses.notes}`);
+        if (r.responses?.desiredOutcome) L.push(`- Desired outcome: ${r.responses.desiredOutcome}`);
+        if (r.responses?.constraints)    L.push(`- Constraints: ${r.responses.constraints}`);
+        const triggered = r.riskFlags?.filter(f => f.triggered) || [];
+        if (triggered.length) L.push(`- ⚠ Risk flags: ${triggered.map(f => f.category).join(', ')}`);
       }
     }
 
     if (ctx?.issueNodes?.length) {
       L.push('', '## Issue Map');
-      for (const priority of ['high', 'medium', 'low']) {
+      for (const priority of ['critical', 'high', 'medium', 'low']) {
         const nodes = ctx.issueNodes.filter(n => (n.priority || 'medium') === priority);
         if (!nodes.length) continue;
         L.push(`### ${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority`);
         for (const n of nodes) {
-          L.push(`- ${n.title || n.content || '(no title)'}`);
+          L.push(`- ${n.label || '(no label)'}`);
           if (n.notes) L.push(`  ${n.notes}`);
         }
       }
@@ -222,16 +223,20 @@
       recent.forEach((s, i) => {
         L.push(`### Session ${ctx.sessions.length - recent.length + i + 1}`);
         if (s.phase)  L.push(`- Phase: ${s.phase}`);
+        if (s.date || s.createdAt) L.push(`- Date: ${fmt(s.date || s.createdAt)}`);
+        if (Array.isArray(s.agenda) && s.agenda.length) L.push(`- Agenda: ${s.agenda.join('; ')}`);
         if (s.notes)  L.push(`- Notes: ${s.notes}`);
-        if (s.createdAt) L.push(`- Date: ${fmt(s.createdAt)}`);
       });
     }
 
     if (ctx?.commitments?.length) {
       L.push('', '## Commitments');
       for (const c of ctx.commitments) {
-        L.push(`- [${c.status || 'pending'}] ${c.description || c.title || '(no description)'}`);
-        if (c.owner)   L.push(`  Owner: ${c.owner}`);
+        L.push(`- [${c.status || 'pending'}] ${c.text || '(no text)'}`);
+        if (c.ownerId) {
+          const owner = ctx.participants?.find(p => p.id === c.ownerId)?.displayName || c.ownerId;
+          L.push(`  Owner: ${owner}`);
+        }
         if (c.dueDate) L.push(`  Due: ${fmt(c.dueDate)}`);
       }
     }
@@ -239,8 +244,9 @@
     if (ctx?.followUps?.length) {
       L.push('', '## Follow-up Checkpoints');
       for (const f of ctx.followUps) {
-        L.push(`- ${f.description || f.title || '(no description)'}`);
-        if (f.scheduledDate) L.push(`  Scheduled: ${fmt(f.scheduledDate)}`);
+        L.push(`- Target: ${f.targetDate ? fmt(f.targetDate) : '(no date set)'}`);
+        if (f.result)      L.push(`  Result: ${f.result}`);
+        if (f.completedAt) L.push(`  Completed: ${fmt(f.completedAt)}`);
       }
     }
 
@@ -273,7 +279,11 @@
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
 
     const systemMsg = messages.find(m => m.role === 'system');
-    const chatMsgs  = messages.filter(m => m.role !== 'system');
+    // Gemini requires contents to start with a user turn; drop any leading assistant messages
+    // (can occur after the initial greeting or at history-trim boundaries).
+    const allChat   = messages.filter(m => m.role !== 'system');
+    const firstUser = allChat.findIndex(m => m.role === 'user');
+    const chatMsgs  = firstUser >= 0 ? allChat.slice(firstUser) : allChat;
 
     const body = {
       ...(systemMsg && { systemInstruction: { parts: [{ text: systemMsg.content }] } }),
@@ -354,16 +364,17 @@
     el.id = 'byoai-panel';
     el.setAttribute('role', 'complementary');
     el.setAttribute('aria-label', 'AI Facilitator');
+    el.setAttribute('aria-hidden', 'true');
     el.style.cssText = `
       position:fixed;inset:0 0 0 auto;width:min(400px,100vw);
       background:${C.bg};border-left:1px solid ${C.border};
       display:flex;flex-direction:column;z-index:99999;
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       color:${C.text};box-shadow:-4px 0 32px rgba(0,0,0,0.5);
-      transform:translateX(100%);transition:transform 0.25s ease;
+      transform:translateX(100%);${reducedMotion ? '' : 'transition:transform 0.25s ease;'}
     `;
     el.innerHTML = `
-      <div style="padding:13px 14px;border-bottom:1px solid ${C.border};
+      <div style="padding:max(13px,env(safe-area-inset-top,0px)) 14px 13px;border-bottom:1px solid ${C.border};
                   display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <span aria-hidden="true" style="font-size:18px;">🤝</span>
         <span style="font-weight:700;font-size:14px;flex:1;letter-spacing:0.01em;">AI Facilitator</span>
@@ -374,7 +385,7 @@
       </div>
       <div id="byoai-body" style="flex:1;overflow-y:auto;padding:12px;
            display:flex;flex-direction:column;gap:8px;" role="log" aria-live="polite"></div>
-      <div id="byoai-footer" style="padding:10px 12px;border-top:1px solid ${C.border};
+      <div id="byoai-footer" style="padding:10px 12px max(10px,env(safe-area-inset-bottom,0px)) 12px;border-top:1px solid ${C.border};
            display:flex;gap:8px;flex-shrink:0;align-items:flex-end;">
         <textarea id="byoai-input" rows="2" placeholder="Ask the AI facilitator…"
           aria-label="Message to AI facilitator"
@@ -396,6 +407,7 @@
     const cfg  = loadConfig() || {};
     const body = document.getElementById('byoai-body');
     body.innerHTML = '';
+    document.getElementById('byoai-footer').style.display = 'none';
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'padding:4px 2px;';
@@ -413,7 +425,7 @@
       <div style="margin-bottom:14px;">
         <label style="display:block;margin-bottom:5px;font-size:12px;color:${C.muted};font-weight:500;" for="byoai-inp-key">API Key</label>
         <input type="password" id="byoai-inp-key" autocomplete="off" spellcheck="false"
-          value="${cfg.apiKey||''}" placeholder="Paste your API key here"
+          placeholder="Paste your API key here"
           style="${inputCSS}" />
         <p style="margin:5px 0 0;font-size:11px;color:${C.muted};line-height:1.4;">
           Stored in your browser only. Sent exclusively to your chosen AI provider.
@@ -434,7 +446,6 @@
           Base URL <span style="font-weight:400;">(OpenAI-compatible)</span>
         </label>
         <input type="url" id="byoai-inp-endpoint"
-          value="${cfg.endpoint||'https://api.openai.com/v1'}"
           placeholder="https://api.openai.com/v1"
           style="${inputCSS}" />
         <p style="margin:5px 0 0;font-size:11px;color:${C.muted};">
@@ -461,13 +472,22 @@
     const modelStatus  = document.getElementById('byoai-model-status');
     const inpEndpointUrl = document.getElementById('byoai-inp-endpoint');
 
+    // Set user-supplied values via DOM to avoid HTML injection via template literals
+    inpKey.value = cfg.apiKey || '';
+    inpEndpointUrl.value = cfg.endpoint || 'https://api.openai.com/v1';
+
     function renderModelOptions(models, preferred) {
       const prev = preferred || selModel.value;
-      selModel.innerHTML = models.map(m => {
-        const id = m.id || m;
-        const label = m.label || m;
-        return `<option value="${id}" ${prev===id?'selected':''}>${label}</option>`;
-      }).join('');
+      selModel.innerHTML = '';
+      for (const m of models) {
+        const id = m.id || String(m);
+        const label = m.label || String(m);
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = label;
+        opt.selected = prev === id;
+        selModel.appendChild(opt);
+      }
     }
 
     async function discoverModels(provider, apiKey, endpoint) {
@@ -581,29 +601,6 @@
 
   // ── Chat view ─────────────────────────────────────────────────────────────
 
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function md2html(text) {
-    return escHtml(text)
-      // headings
-      .replace(/^#{1,3} (.+)$/gm, '<strong style="display:block;font-size:13px;margin:10px 0 3px;">$1</strong>')
-      // bold
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      // italic
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      // bullet list items
-      .replace(/^[-•] (.+)$/gm, '<div style="padding-left:14px;margin:2px 0;">• $1</div>')
-      // numbered list items
-      .replace(/^\d+\. (.+)$/gm, (_, p) => `<div style="padding-left:14px;margin:2px 0;">$1</div>`)
-      // double newline → paragraph break
-      .replace(/\n{2,}/g, '<br><br>')
-      .replace(/\n/g, '<br>');
-  }
-
   function renderChat() {
     const body = document.getElementById('byoai-body');
     body.innerHTML = '';
@@ -697,7 +694,7 @@
       appendBubble('assistant', reply);
     } catch (e) {
       hideTyping();
-      appendBubble('assistant', `⚠ Could not reach AI: ${escHtml(e.message)}\n\nCheck your API key and network connection in Settings (⚙).`);
+      appendBubble('assistant', `⚠ Could not reach AI: ${e.message}\n\nCheck your API key and network connection in Settings (⚙).`);
     }
   }
 
@@ -722,13 +719,18 @@
     showTyping();
 
     try {
-      const reply = await callAI(cfg, state.history);
+      // Keep system prompt + last 20 messages to avoid context-window overflow
+      const msgs = state.history.length > 21
+        ? [state.history[0], ...state.history.slice(-20)]
+        : state.history;
+      const reply = await callAI(cfg, msgs);
       state.history.push({ role: 'assistant', content: reply });
       hideTyping();
       appendBubble('assistant', reply);
     } catch (e) {
+      state.history.pop(); // remove the unresponded user turn to keep history alternating
       hideTyping();
-      appendBubble('assistant', `⚠ Error: ${escHtml(e.message)}`);
+      appendBubble('assistant', `⚠ Error: ${e.message}`);
     } finally {
       state.busy = false;
       if (sendBtn) sendBtn.disabled = false;
@@ -741,25 +743,29 @@
     const btn = document.createElement('button');
     btn.id = 'byoai-toggle';
     btn.setAttribute('aria-label', 'Open AI Facilitator');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'byoai-panel');
     btn.setAttribute('title', 'AI Facilitator');
     btn.style.cssText = `
-      position:fixed;bottom:22px;right:22px;z-index:99998;
+      position:fixed;bottom:calc(22px + env(safe-area-inset-bottom,0px));right:calc(22px + env(safe-area-inset-right,0px));z-index:99998;
       width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
       background:linear-gradient(135deg,#4f8ef7 0%,#7b5ea7 100%);
       color:#fff;font-size:22px;
       box-shadow:0 4px 16px rgba(79,142,247,0.45);
       touch-action:manipulation;display:flex;align-items:center;justify-content:center;
-      transition:transform 0.15s ease,box-shadow 0.15s ease;
+      ${reducedMotion ? '' : 'transition:transform 0.15s ease,box-shadow 0.15s ease;'}
     `;
     btn.textContent = '🤝';
-    btn.addEventListener('mouseenter', () => {
-      btn.style.transform = 'scale(1.1)';
-      btn.style.boxShadow = '0 6px 22px rgba(79,142,247,0.65)';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transform = 'scale(1)';
-      btn.style.boxShadow = '0 4px 16px rgba(79,142,247,0.45)';
-    });
+    if (!reducedMotion) {
+      btn.addEventListener('mouseenter', () => {
+        btn.style.transform = 'scale(1.1)';
+        btn.style.boxShadow = '0 6px 22px rgba(79,142,247,0.65)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'scale(1)';
+        btn.style.boxShadow = '0 4px 16px rgba(79,142,247,0.45)';
+      });
+    }
     btn.addEventListener('click', togglePanel);
     return btn;
   }
@@ -780,10 +786,27 @@
 
     state.open = !state.open;
     state.panelEl.style.transform = state.open ? 'translateX(0)' : 'translateX(100%)';
+    state.panelEl.setAttribute('aria-hidden', state.open ? 'false' : 'true');
 
-    if (state.open && state.history.length === 0 && !state.settingsOpen) {
-      if (!loadConfig()) { state.settingsOpen = true; renderSettings(); }
-      else loadContextAndGreet();
+    const toggleBtn = document.getElementById('byoai-toggle');
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', state.open ? 'true' : 'false');
+      toggleBtn.setAttribute('aria-label', state.open ? 'Close AI Facilitator' : 'Open AI Facilitator');
+    }
+
+    if (state.open) {
+      if (state.history.length === 0 && !state.settingsOpen) {
+        if (!loadConfig()) { state.settingsOpen = true; renderSettings(); }
+        else loadContextAndGreet();
+      }
+      requestAnimationFrame(() => {
+        const target = state.settingsOpen
+          ? document.getElementById('byoai-sel-provider')
+          : document.getElementById('byoai-input');
+        target?.focus();
+      });
+    } else {
+      toggleBtn?.focus();
     }
   }
 
@@ -794,6 +817,13 @@
     document.getElementById('byoai-btn-close').addEventListener('click', () => {
       state.open = false;
       state.panelEl.style.transform = 'translateX(100%)';
+      state.panelEl.setAttribute('aria-hidden', 'true');
+      const toggleBtn = document.getElementById('byoai-toggle');
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
+        toggleBtn.focus();
+      }
     });
 
     document.getElementById('byoai-btn-settings').addEventListener('click', () => {
@@ -818,19 +848,31 @@
     });
   }
 
-  // ── SPA route watcher ─────────────────────────────────────────────────────
+  // ── Keyboard: Escape closes panel ────────────────────────────────────────
 
-  let _lastRoute = detectRoute();
-  setInterval(() => {
-    const route = detectRoute();
-    if (route !== _lastRoute) {
-      _lastRoute = route;
-      if (state.open && !state.settingsOpen) {
-        state.history = [];
-        loadContextAndGreet();
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && state.open) {
+      e.preventDefault();
+      state.open = false;
+      state.panelEl.style.transform = 'translateX(100%)';
+      state.panelEl.setAttribute('aria-hidden', 'true');
+      const toggleBtn = document.getElementById('byoai-toggle');
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
+        toggleBtn.focus();
       }
     }
-  }, 500);
+  });
+
+  // ── SPA route watcher ─────────────────────────────────────────────────────
+
+  window.addEventListener('hashchange', () => {
+    if (state.open && !state.settingsOpen) {
+      state.history = [];
+      loadContextAndGreet();
+    }
+  });
 
   // ── Boot ──────────────────────────────────────────────────────────────────
 
