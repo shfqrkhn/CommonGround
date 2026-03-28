@@ -21,3 +21,6 @@
 
 ## 2026-03-28 - [🎨 Palette] - [Center-Content Viewport Overflow]
 **Protocol:** `.center-content{min-height:100dvh}` causes the create-workspace page to overflow by the footer height (~53px), pushing the footer off-screen and requiring vertical scrolling. Fix: use `min-height:calc(100dvh - 48px - env(safe-area-inset-bottom))` so the centering column fills exactly the available height above the footer.
+
+## 2026-03-28 - [🛡️ Sentinel] - [Global Notice Sticky Overlap]
+**Protocol:** `.global-notice` had `position:sticky;top:0` (z-index 95) and appears before the header (z-index 100) in DOM order. When the user scrolled with a persistent error notice visible, the header slid on top and permanently covered the notice. Fix: remove `position:sticky;top:0` from `.global-notice` — it stays in normal document flow, remains visible until dismissed, and does not conflict with the sticky header.
