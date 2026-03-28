@@ -252,9 +252,15 @@
       if (ctx.allMatters.length > 5) L.push(`*(and ${ctx.allMatters.length - 5} more)*`);
     }
 
+    const matterLabel = ctx?.matter
+      ? `"${ctx.matter.title}" (${ctx.matter.type || 'unknown type'})`
+      : 'the current facilitation context';
+
     L.push(
       '', '## Response Format',
-      'Be concise and practical. When suggesting questions for participants, use a numbered list.',
+      'Output plain text only. Do not use markdown: no asterisks, no hash headings, no dashes for bullets, no backticks.',
+      'Be concise — 3 to 5 sentences, or a short numbered list when listing questions. No lengthy preamble.',
+      `Focus all guidance on ${matterLabel}.`,
       'Lead with any safety or ethical flags before other content.',
     );
 
@@ -623,10 +629,9 @@
     bubble.style.cssText = `
       padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.55;
       background:${isAI ? C.aiBg : C.userBg};border:1px solid ${C.border};
-      word-wrap:break-word;max-width:100%;
+      word-wrap:break-word;max-width:100%;${isAI ? 'white-space:pre-wrap;' : ''}
     `;
-    if (isAI) bubble.innerHTML = md2html(content);
-    else bubble.textContent = content;
+    bubble.textContent = content;
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `display:flex;flex-direction:column;align-items:${isAI?'flex-start':'flex-end'};`;
@@ -674,11 +679,14 @@
     renderChat();
     showTyping();
 
+    const matterContext = state.ctx?.matter
+      ? ` for "${state.ctx.matter.title}" (${state.ctx.matter.type || 'unknown'})`
+      : '';
     const seed = [
       { role: 'system', content: sysPrompt },
       {
         role: 'user',
-        content: `I'm on the "${route}" screen. Briefly acknowledge the context you have, then offer 2–3 specific, actionable facilitation suggestions for right now. Be concise.`,
+        content: `I'm on the "${route}" screen${matterContext}. Give 2-3 specific, actionable facilitation suggestions for right now. Plain text only, no formatting.`,
       },
     ];
 
