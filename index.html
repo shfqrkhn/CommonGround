@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; manifest-src 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; child-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests;" />
     <meta name="description" content="Facilitator-first human-systems resolution suite. Resolve clearly." />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(self)" />
     <meta name="theme-color" content="#1a1f2e" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -35,6 +37,17 @@
     <link rel="apple-touch-startup-image" media="screen and (device-width:1032px) and (device-height:1376px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="/CommonGround/icons/splash/apple-splash-2064-2752.png" />
     <link rel="manifest" href="/CommonGround/manifest.webmanifest" />
     <title>CommonGround Suite</title>
+    <style>
+      button,
+      [role="button"],
+      [type="button"],
+      [type="submit"],
+      [type="reset"],
+      a,
+      summary {
+        touch-action: manipulation;
+      }
+    </style>
     <script type="module" crossorigin src="/CommonGround/assets/index-DQPX2SFP.js"></script>
     <link rel="stylesheet" crossorigin href="/CommonGround/assets/index-BKn_KlXK.css">
     <!-- BYOAI: optional AI facilitator overlay — loads after app, fully additive -->
