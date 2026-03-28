@@ -364,7 +364,7 @@
       transform:translateX(100%);transition:transform 0.25s ease;
     `;
     el.innerHTML = `
-      <div style="padding:13px 14px;border-bottom:1px solid ${C.border};
+      <div style="padding:max(13px,env(safe-area-inset-top,0px)) 14px 13px;border-bottom:1px solid ${C.border};
                   display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <span aria-hidden="true" style="font-size:18px;">🤝</span>
         <span style="font-weight:700;font-size:14px;flex:1;letter-spacing:0.01em;">AI Facilitator</span>
