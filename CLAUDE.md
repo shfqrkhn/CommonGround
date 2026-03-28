@@ -9,7 +9,7 @@
 This is the **compiled distribution repository** for COMMONGROUND Suite, a local-first, offline-capable progressive web app for conflict resolution and structured team conversation facilitation. The source code, TypeScript, tests, and build toolchain live in a **separate private source repository**. This repo contains the built output deployed to GitHub Pages.
 
 **Live app:** https://shfqrkhn.github.io/CommonGround/
-**Current version:** v0.1.85
+**Current version:** v0.1.86
 
 ---
 
@@ -170,7 +170,7 @@ Omitting any check allows malformed or adversarially crafted bundles to silently
 
 - **Framework:** Vitest + fake-indexeddb
 - **Coverage target:** 95%+ statement coverage; 100% for core database services
-- **Test count:** 116 tests (as of v0.1.85)
+- **Test count:** 116 tests (as of v0.1.86)
 - **What is tested:** core database services, data migrations, import/export validation, suitability assessment logic, form validation
 
 Tests live in the **source repository**, not this distribution repository. Do not add test files here.
