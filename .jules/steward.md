@@ -15,3 +15,9 @@
 
 ## 2026-03-28 - [🛡️ Sentinel] - [Service Worker Revision Integrity]
 **Protocol:** After every commit that modifies a precached asset (JS, CSS, HTML, manifest), the corresponding `revision` field in `sw.js` must be updated to the first 16 hex characters of the file's SHA-256 hash. Omitting this step leaves a stale revision that prevents Workbox from invalidating the old cached asset for returning users, silently serving outdated code.
+
+## 2026-03-28 - [🎨 Palette] - [Mobile Header Nav Overflow]
+**Protocol:** The header brand has `flex-shrink:0`, so on narrow screens (≤480px) the brand + nav together exceed the viewport width. Fix: (1) hide `.brand-tag` at ≤640px and reduce `header-inner` gap to `var(--space-2)`; (2) hide `.brand-name` and reduce `header-inner` padding to `0 var(--space-2)` at ≤480px. This keeps all three nav buttons (Dashboard, Matters, Settings) fully visible with no horizontal overflow down to 320px.
+
+## 2026-03-28 - [🎨 Palette] - [Center-Content Viewport Overflow]
+**Protocol:** `.center-content{min-height:100dvh}` causes the create-workspace page to overflow by the footer height (~53px), pushing the footer off-screen and requiring vertical scrolling. Fix: use `min-height:calc(100dvh - 48px - env(safe-area-inset-bottom))` so the centering column fills exactly the available height above the footer.
