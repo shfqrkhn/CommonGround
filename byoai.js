@@ -791,7 +791,12 @@
         if (!loadConfig()) { state.settingsOpen = true; renderSettings(); }
         else loadContextAndGreet();
       }
-      requestAnimationFrame(() => { document.getElementById('byoai-input')?.focus(); });
+      requestAnimationFrame(() => {
+        const target = state.settingsOpen
+          ? document.getElementById('byoai-sel-provider')
+          : document.getElementById('byoai-input');
+        target?.focus();
+      });
     } else {
       toggleBtn?.focus();
     }
