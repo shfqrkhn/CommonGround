@@ -708,7 +708,11 @@
     showTyping();
 
     try {
-      const reply = await callAI(cfg, state.history);
+      // Keep system prompt + last 20 messages to avoid context-window overflow
+      const msgs = state.history.length > 21
+        ? [state.history[0], ...state.history.slice(-20)]
+        : state.history;
+      const reply = await callAI(cfg, msgs);
       state.history.push({ role: 'assistant', content: reply });
       hideTyping();
       appendBubble('assistant', reply);
@@ -824,6 +828,23 @@
       loadContextAndGreet();
     });
   }
+
+  // ── Keyboard: Escape closes panel ────────────────────────────────────────
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && state.open) {
+      e.preventDefault();
+      state.open = false;
+      state.panelEl.style.transform = 'translateX(100%)';
+      state.panelEl.setAttribute('aria-hidden', 'true');
+      const toggleBtn = document.getElementById('byoai-toggle');
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
+        toggleBtn.focus();
+      }
+    }
+  });
 
   // ── SPA route watcher ─────────────────────────────────────────────────────
 
