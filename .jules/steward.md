@@ -30,3 +30,6 @@ Omitting this step leaves a stale revision that prevents Workbox from invalidati
 
 ## 2026-03-28 - [🎨 Palette] - [SW Banner Safe-Area Insets]
 **Protocol:** `.sw-banner` is `position:sticky;top:0` (z-index 110) and appears above the header in the DOM. Unlike `.app-header`, it lacked `env(safe-area-inset-top/left/right)` padding, causing banner text to be clipped under the status bar on notched iPhones in standalone PWA mode. Fix: use `padding-top:max(var(--space-2),env(safe-area-inset-top))`, `padding-left:max(var(--space-4),env(safe-area-inset-left))`, `padding-right:max(var(--space-4),env(safe-area-inset-right))` on `.sw-banner` — the same pattern the header uses, preserving minimum visual padding while accommodating the safe area.
+
+## 2026-03-28 - [🛡️ Sentinel] - [BYOAI CSP Compatibility]
+**Protocol:** When BYOAI is enabled, CSP `connect-src` must include `https:` (while remaining tightly scoped) or provider API calls and model auto-discovery will fail at runtime.

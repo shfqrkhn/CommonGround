@@ -9,7 +9,7 @@
 This is the **compiled distribution repository** for COMMONGROUND Suite, a local-first, offline-capable progressive web app for conflict resolution and structured team conversation facilitation. The source code, TypeScript, tests, and build toolchain live in a **separate private source repository**. This repo contains the built output deployed to GitHub Pages.
 
 **Live app:** https://shfqrkhn.github.io/CommonGround/
-**Current version:** v0.1.90
+**Current version:** v0.1.96
 
 ---
 
@@ -58,7 +58,7 @@ This is the **compiled distribution repository** for COMMONGROUND Suite, a local
 ### Local-First, Zero-Backend
 
 - **No server.** All data lives in the browser's IndexedDB.
-- **No external calls.** CSP enforces `connect-src 'self'` only.
+- **No external calls by default.** Optional BYOAI provider traffic uses HTTPS when explicitly configured by the user.
 - **No credentials.** No API keys, tokens, env vars, or secrets needed anywhere.
 - **No CDN runtime.** All dependencies are bundled; the app is fully self-contained after the first load.
 
@@ -128,7 +128,7 @@ All navigation requests fall through to `index.html` via the Workbox service wor
 
 1. **Sovereign** — no backend dependency, no CDN runtime, no external calls in production.
 2. **Atomic changes** — every service function is independently testable with bounded side effects.
-3. **Strict CSP** — `connect-src 'self'` only; no inline scripts; no eval.
+3. **Strict CSP** — base app is self-hosted; `connect-src` permits HTTPS only for optional BYOAI provider calls; no eval.
 4. **Accessible** — WCAG 2.1 AA: keyboard navigable, screen-reader semantic, reduced-motion safe.
 5. **Offline-first** — full offline capability after first visit; installable as standalone PWA.
 
@@ -207,7 +207,7 @@ When working in this repository as an AI assistant:
 
 ## Security Constraints
 
-- **CSP is strict and intentional.** Do not relax `connect-src`, add `unsafe-inline`, or add `unsafe-eval` under any circumstances.
+- **CSP is strict and intentional.** Keep `connect-src` limited to `'self' https:` for BYOAI compatibility; do not add wider network scopes, `unsafe-inline`, or `unsafe-eval`.
 - **No external URLs.** Do not add `<script src="...">`, `<link rel="stylesheet" href="...">`, or any resource pointing outside `'self'`.
 - **No backend.** Do not add fetch calls, WebSockets, or any network I/O targeting external hosts.
 - **No credentials in code.** There are no API keys, tokens, or secrets — if you find yourself needing one, stop and reconsider the approach.
