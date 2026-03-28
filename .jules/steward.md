@@ -58,6 +58,15 @@ All splash images and the screenshot must be added to the Workbox precache with 
 ## 2026-03-28 - [🛡️ Sentinel] - [Favicon SVG Removal]
 **Protocol:** `index.html` previously declared `<link rel="icon" type="image/svg+xml" href="...favicon.svg">` as the primary icon with a PNG as fallback. Android Chrome ignores SVG favicons for PWA home screen icons and falls through to the manifest. The SVG-first link was replaced with explicit PNG links (`icon-32.png` sizes="32x32", `icon-16.png` sizes="16x16") and `<link rel="apple-touch-icon" sizes="256x256" href="icons/icon-256.png">`. Never use SVG as the primary favicon source in this repository.
 
+## 2026-03-28 - [🤝 BYOAI] - [escHtml With textContent Double-Encoding]
+**Protocol:** In `byoai.js`, `appendBubble()` renders content via `bubble.textContent`, which means the DOM already escapes special characters safely. Wrapping the error message in `escHtml()` before passing to `appendBubble()` causes HTML entities (`&lt;`, `&amp;`, `&quot;`) to appear literally in the UI — e.g. an API error containing `<details>` would display as `&lt;details&gt;`. Fix: omit `escHtml()` for any string destined for `textContent`. Only use `escHtml()` when injecting into `innerHTML`.
+
+## 2026-03-28 - [🤝 BYOAI] - [Dead Code Removal After Plain-Text Refactor]
+**Protocol:** After switching `appendBubble()` from `innerHTML`/`md2html` to `textContent` in v0.1.97, the `md2html()` function became unreachable dead code. Remove it. Dead HTML-rendering helpers left in place after a rendering model change create confusion and inflate the bundle size for no benefit.
+
+## 2026-03-28 - [🤝 BYOAI] - [SPA Route Detection via hashchange]
+**Protocol:** The SPA route watcher previously polled via `setInterval(..., 500)`. Since the app uses hash-based routing (`location.hash`), the correct primitive is `window.addEventListener('hashchange', ...)`. The event fires synchronously when the hash changes, giving zero-latency context refresh with no polling overhead. Replace any `setInterval` route-change poll in hash-based SPAs with `hashchange`.
+
 ## 2026-03-28 - [🤝 BYOAI] - [AI Assistant Plain Text Output]
 **Protocol:** The BYOAI AI Facilitator must output and render plain text only — no markdown syntax. Two changes are required in tandem:
 1. **Rendering** — `appendBubble` must use `bubble.textContent = content` (with `white-space:pre-wrap` on the AI bubble) instead of `bubble.innerHTML = md2html(content)`. This prevents raw markdown tokens (`**`, `##`, `-`) from appearing as literal characters in the UI.

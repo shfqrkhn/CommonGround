@@ -587,23 +587,6 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function md2html(text) {
-    return escHtml(text)
-      // headings
-      .replace(/^#{1,3} (.+)$/gm, '<strong style="display:block;font-size:13px;margin:10px 0 3px;">$1</strong>')
-      // bold
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      // italic
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      // bullet list items
-      .replace(/^[-•] (.+)$/gm, '<div style="padding-left:14px;margin:2px 0;">• $1</div>')
-      // numbered list items
-      .replace(/^\d+\. (.+)$/gm, (_, p) => `<div style="padding-left:14px;margin:2px 0;">$1</div>`)
-      // double newline → paragraph break
-      .replace(/\n{2,}/g, '<br><br>')
-      .replace(/\n/g, '<br>');
-  }
-
   function renderChat() {
     const body = document.getElementById('byoai-body');
     body.innerHTML = '';
@@ -697,7 +680,7 @@
       appendBubble('assistant', reply);
     } catch (e) {
       hideTyping();
-      appendBubble('assistant', `⚠ Could not reach AI: ${escHtml(e.message)}\n\nCheck your API key and network connection in Settings (⚙).`);
+      appendBubble('assistant', `⚠ Could not reach AI: ${e.message}\n\nCheck your API key and network connection in Settings (⚙).`);
     }
   }
 
@@ -728,7 +711,7 @@
       appendBubble('assistant', reply);
     } catch (e) {
       hideTyping();
-      appendBubble('assistant', `⚠ Error: ${escHtml(e.message)}`);
+      appendBubble('assistant', `⚠ Error: ${e.message}`);
     } finally {
       state.busy = false;
       if (sendBtn) sendBtn.disabled = false;
@@ -820,17 +803,12 @@
 
   // ── SPA route watcher ─────────────────────────────────────────────────────
 
-  let _lastRoute = detectRoute();
-  setInterval(() => {
-    const route = detectRoute();
-    if (route !== _lastRoute) {
-      _lastRoute = route;
-      if (state.open && !state.settingsOpen) {
-        state.history = [];
-        loadContextAndGreet();
-      }
+  window.addEventListener('hashchange', () => {
+    if (state.open && !state.settingsOpen) {
+      state.history = [];
+      loadContextAndGreet();
     }
-  }, 500);
+  });
 
   // ── Boot ──────────────────────────────────────────────────────────────────
 
