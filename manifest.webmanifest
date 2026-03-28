@@ -64,7 +64,7 @@
     {
       "src": "/CommonGround/screenshot-app.png",
       "type": "image/png",
-      "form_factor": "narrow",
+      "form_factor": "wide",
       "label": "CommonGround facilitation dashboard"
     }
   ]
