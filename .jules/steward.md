@@ -33,3 +33,9 @@ Omitting this step leaves a stale revision that prevents Workbox from invalidati
 
 ## 2026-03-28 - [🛡️ Sentinel] - [BYOAI CSP Compatibility]
 **Protocol:** When BYOAI is enabled, CSP `connect-src` must include `https:` (while remaining tightly scoped) or provider API calls and model auto-discovery will fail at runtime.
+
+## 2026-03-28 - [🤝 BYOAI] - [AI Assistant Plain Text Output]
+**Protocol:** The BYOAI AI Facilitator must output and render plain text only — no markdown syntax. Two changes are required in tandem:
+1. **Rendering** — `appendBubble` must use `bubble.textContent = content` (with `white-space:pre-wrap` on the AI bubble) instead of `bubble.innerHTML = md2html(content)`. This prevents raw markdown tokens (`**`, `##`, `-`) from appearing as literal characters in the UI.
+2. **System prompt** — the Response Format section must explicitly instruct the model: no asterisks, no hash headings, no dashes for bullets, no backticks; 3–5 sentence cap; all guidance anchored to the active matter's title and type. The seed greeting must also name the matter and request plain text.
+Omitting either change causes the other to partially break: a plain-text prompt with HTML rendering is harmless, but a markdown prompt with `textContent` rendering shows raw symbols to the user.
