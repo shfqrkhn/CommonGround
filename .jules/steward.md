@@ -12,3 +12,6 @@
 
 ## 2026-03-28 - [🛡️ Sentinel] - [Import Validation Completeness]
 **Protocol:** When updating minified JS bundles, ensure version numbers in UI (Pt variable), README.md, and CLAUDE.md are properly synchronized.
+
+## 2026-03-28 - [🛡️ Sentinel] - [Service Worker Revision Integrity]
+**Protocol:** After every commit that modifies a precached asset (JS, CSS, HTML, manifest), the corresponding `revision` field in `sw.js` must be updated to the first 16 hex characters of the file's SHA-256 hash. Omitting this step leaves a stale revision that prevents Workbox from invalidating the old cached asset for returning users, silently serving outdated code.
