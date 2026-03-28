@@ -402,6 +402,7 @@
     const cfg  = loadConfig() || {};
     const body = document.getElementById('byoai-body');
     body.innerHTML = '';
+    document.getElementById('byoai-footer').style.display = 'none';
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'padding:4px 2px;';
