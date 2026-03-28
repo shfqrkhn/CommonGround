@@ -375,7 +375,7 @@
       </div>
       <div id="byoai-body" style="flex:1;overflow-y:auto;padding:12px;
            display:flex;flex-direction:column;gap:8px;" role="log" aria-live="polite"></div>
-      <div id="byoai-footer" style="padding:10px 12px;border-top:1px solid ${C.border};
+      <div id="byoai-footer" style="padding:10px 12px max(10px,env(safe-area-inset-bottom,0px)) 12px;border-top:1px solid ${C.border};
            display:flex;gap:8px;flex-shrink:0;align-items:flex-end;">
         <textarea id="byoai-input" rows="2" placeholder="Ask the AI facilitator…"
           aria-label="Message to AI facilitator"
@@ -735,7 +735,7 @@
     btn.setAttribute('aria-controls', 'byoai-panel');
     btn.setAttribute('title', 'AI Facilitator');
     btn.style.cssText = `
-      position:fixed;bottom:22px;right:22px;z-index:99998;
+      position:fixed;bottom:calc(22px + env(safe-area-inset-bottom,0px));right:calc(22px + env(safe-area-inset-right,0px));z-index:99998;
       width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
       background:linear-gradient(135deg,#4f8ef7 0%,#7b5ea7 100%);
       color:#fff;font-size:22px;

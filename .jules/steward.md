@@ -1,3 +1,9 @@
+## 2026-03-28 - [📱 Mobile] - [BYOAI Toggle and Panel Footer Safe-Area Insets]
+**Protocol:** `byoai.js` uses `viewport-fit=cover` (inherited from `index.html`), which activates `env(safe-area-inset-*)` CSS variables. Two elements lacked safe-area padding:
+1. **Toggle button** — `position:fixed;bottom:22px;right:22px` places the 🤝 button within the iOS home indicator zone (~34px) on iPhone X+ in standalone PWA mode, making it unreachable by touch. Fix: `bottom:calc(22px + env(safe-area-inset-bottom,0px));right:calc(22px + env(safe-area-inset-right,0px))` — uses `calc()` to add insets on top of the minimum visual offset, same pattern as the app header.
+2. **Panel footer** — the chat input/send button row had `padding:10px 12px` with no bottom safe-area allowance, hiding the controls behind the home indicator. Fix: set bottom padding to `max(10px,env(safe-area-inset-bottom,0px))` using the CSS `max()` function so the minimum visual padding is always preserved while accommodating the safe area.
+Any `position:fixed` element that is anchored to the bottom edge must include `env(safe-area-inset-bottom)` in its positioning when `viewport-fit:cover` is active.
+
 ## 2026-03-28 - [♿ A11y] - [BYOAI Panel Escape Key and History Overflow]
 **Protocol:** Two additional issues remained after the ARIA/focus fix in v0.1.100:
 1. **Escape key not handled** — ARIA APG (Disclosure pattern) requires that pressing Escape closes a visible non-modal panel and returns focus to the controlling element. Without it, keyboard users must Tab back to the close button to dismiss the panel. Fix: add a `document.addEventListener('keydown', ...)` handler that fires when `e.key === 'Escape'` and `state.open` is true; update all ARIA state and return focus to the toggle button (same pattern as the close-button handler).
