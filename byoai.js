@@ -723,6 +723,7 @@
       hideTyping();
       appendBubble('assistant', reply);
     } catch (e) {
+      state.history.pop(); // remove the unresponded user turn to keep history alternating
       hideTyping();
       appendBubble('assistant', `⚠ Error: ${e.message}`);
     } finally {
