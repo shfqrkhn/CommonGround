@@ -24,3 +24,6 @@
 
 ## 2026-03-28 - [🛡️ Sentinel] - [Global Notice Sticky Overlap]
 **Protocol:** `.global-notice` had `position:sticky;top:0` (z-index 95) and appears before the header (z-index 100) in DOM order. When the user scrolled with a persistent error notice visible, the header slid on top and permanently covered the notice. Fix: remove `position:sticky;top:0` from `.global-notice` — it stays in normal document flow, remains visible until dismissed, and does not conflict with the sticky header.
+
+## 2026-03-28 - [🎨 Palette] - [SW Banner Safe-Area Insets]
+**Protocol:** `.sw-banner` is `position:sticky;top:0` (z-index 110) and appears above the header in the DOM. Unlike `.app-header`, it lacked `env(safe-area-inset-top/left/right)` padding, causing banner text to be clipped under the status bar on notched iPhones in standalone PWA mode. Fix: use `padding-top:max(var(--space-2),env(safe-area-inset-top))`, `padding-left:max(var(--space-4),env(safe-area-inset-left))`, `padding-right:max(var(--space-4),env(safe-area-inset-right))` on `.sw-banner` — the same pattern the header uses, preserving minimum visual padding while accommodating the safe area.
