@@ -205,7 +205,7 @@
 
     if (ctx?.issueNodes?.length) {
       L.push('', '## Issue Map');
-      for (const priority of ['high', 'medium', 'low']) {
+      for (const priority of ['critical', 'high', 'medium', 'low']) {
         const nodes = ctx.issueNodes.filter(n => (n.priority || 'medium') === priority);
         if (!nodes.length) continue;
         L.push(`### ${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority`);
