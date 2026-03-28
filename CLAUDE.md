@@ -19,11 +19,11 @@ This is the **compiled distribution repository** for COMMONGROUND Suite, a local
 /
 ├── index.html                  # SPA entry point (sets CSP headers + links manifest)
 ├── manifest.webmanifest        # PWA manifest (name, icons, display mode, scope)
-├── favicon.svg                 # Browser favicon
-├── icons.svg                   # SVG icon sprite
+├── icons.svg                   # SVG icon sprite (UI glyphs used by JS bundle)
+├── byoai.js                    # BYOAI optional AI facilitator overlay
 ├── sw.js                       # Compiled Workbox service worker (minified)
 ├── workbox-8c29f6e4.js         # Workbox runtime library
-├── screenshot-app.png          # App screenshot for README
+├── screenshot-app.png          # App screenshot (manifest screenshots field)
 ├── README.md                   # User and developer documentation
 ├── LICENSE                     # MIT License
 ├── .gitignore                  # Ignores node_modules only
@@ -31,7 +31,9 @@ This is the **compiled distribution repository** for COMMONGROUND Suite, a local
 │   ├── index-DQPX2SFP.js      # Main JS bundle (~125KB minified)
 │   ├── index-BKn_KlXK.css     # Main CSS bundle (~19KB minified)
 │   └── workbox-window.prod.es5-Bq4GJJid.js
-├── icons/                      # PWA icons (16px–256px PNG, 256px maskable)
+├── icons/                      # PWA icons: 16–512px PNG + 180px apple-touch +
+│   │                           # 512px maskable; splash/ subdir for iOS launch screens
+│   └── splash/                 # iOS apple-touch-startup-image PNGs (16 device sizes)
 └── .jules/
     └── steward.md              # Protocol log — critical implementation decisions
 ```
