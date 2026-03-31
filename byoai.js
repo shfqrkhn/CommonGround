@@ -17,6 +17,13 @@
   const MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
   const modelListCache = new Map();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DRAFT_KEY = 'byoai_draft';
+  const QUICK_PROMPTS = [
+    { label: '20-min plan', prompt: 'Give me a 3-step facilitation plan for the next 20 minutes.' },
+    { label: 'Next questions', prompt: 'Draft 4 neutral, high-leverage questions I should ask next.' },
+    { label: 'Risk scan', prompt: 'Identify risks, power imbalances, and one mitigation for each.' },
+    { label: 'Commitments', prompt: 'Turn this into clear commitments with owner, due date, and check-in.' },
+  ];
 
   const GEMINI_MODELS = [
     { id: 'gemini-2.0-flash',              label: 'Gemini 2.0 Flash (recommended)' },
@@ -144,6 +151,12 @@
 
   function detectRoute() {
     return location.hash.replace(/^#\/?/, '').replace(/\?.*$/, '') || 'dashboard';
+  }
+
+  function currentDraftKey() {
+    const route = detectRoute();
+    const matterId = detectMatterId() || 'workspace';
+    return `${DRAFT_KEY}:${route}:${matterId}`;
   }
 
   // ── System prompt builder ─────────────────────────────────────────────────
@@ -362,7 +375,8 @@
   function buildPanel() {
     const el = document.createElement('div');
     el.id = 'byoai-panel';
-    el.setAttribute('role', 'complementary');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-label', 'AI Facilitator');
     el.setAttribute('aria-hidden', 'true');
     el.style.cssText = `
@@ -393,11 +407,27 @@
         <div style="display:flex;flex-direction:column;gap:5px;">
           <button id="byoai-btn-send" aria-label="Send message"
             style="${btnCSS}background:${C.accent};color:#fff;padding:8px 12px;">▶</button>
+          <button id="byoai-btn-clear-chat" aria-label="Clear chat" title="Clear chat history"
+            style="${btnCSS}background:${C.bgLL};color:${C.muted};padding:5px 9px;font-size:11px;">🧹</button>
           <button id="byoai-btn-refresh" aria-label="Refresh context" title="Refresh context from app data"
             style="${btnCSS}background:${C.bgLL};color:${C.muted};padding:5px 9px;font-size:11px;">↻</button>
         </div>
       </div>
     `;
+    return el;
+  }
+
+  function buildBackdrop() {
+    const el = document.createElement('div');
+    el.id = 'byoai-backdrop';
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText = `
+      position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.4);
+      opacity:0;pointer-events:none;${reducedMotion ? '' : 'transition:opacity 0.2s ease;'}
+    `;
+    el.addEventListener('click', () => {
+      if (state.open) closePanel();
+    });
     return el;
   }
 
@@ -608,9 +638,36 @@
     for (const msg of state.history) {
       if (msg.role !== 'system') appendBubble(msg.role, msg.content, false);
     }
+    renderQuickPrompts();
 
     body.scrollTop = body.scrollHeight;
     document.getElementById('byoai-footer').style.display = 'flex';
+    updateSendState();
+  }
+
+  function renderQuickPrompts() {
+    if (state.history.some(m => m.role === 'user')) return;
+    const body = document.getElementById('byoai-body');
+    if (!body) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;`;
+    for (const { label, prompt } of QUICK_PROMPTS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', prompt);
+      btn.style.cssText = `${btnCSS}background:${C.bgLL};color:${C.text};border:1px solid ${C.border};padding:7px 10px;text-align:left;`;
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        const input = document.getElementById('byoai-input');
+        if (!input) return;
+        input.value = prompt;
+        autoResizeInput();
+        updateSendState();
+        input.focus();
+      });
+      wrap.appendChild(btn);
+    }
+    body.appendChild(wrap);
   }
 
   function appendBubble(role, content, autoScroll = true) {
@@ -618,9 +675,32 @@
     if (!body) return;
     const isAI  = role === 'assistant';
 
+    const header = document.createElement('div');
+    header.style.cssText = `display:flex;align-items:center;gap:8px;margin-bottom:3px;`;
+
     const label = document.createElement('div');
-    label.style.cssText = `font-size:10px;color:${C.muted};margin-bottom:3px;`;
+    label.style.cssText = `font-size:10px;color:${C.muted};`;
     label.textContent = isAI ? '🤝 AI Facilitator' : '👤 You';
+    header.appendChild(label);
+
+    if (isAI) {
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.setAttribute('aria-label', 'Copy response');
+      copyBtn.style.cssText = `${btnCSS}padding:2px 6px;font-size:10px;background:${C.bgLL};color:${C.muted};border:1px solid ${C.border};`;
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(content);
+          copyBtn.textContent = 'Copied';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+        } catch {
+          copyBtn.textContent = 'Unavailable';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1200);
+        }
+      });
+      header.appendChild(copyBtn);
+    }
 
     const bubble = document.createElement('div');
     bubble.style.cssText = `
@@ -632,7 +712,7 @@
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `display:flex;flex-direction:column;align-items:${isAI?'flex-start':'flex-end'};`;
-    wrapper.appendChild(label);
+    wrapper.appendChild(header);
     wrapper.appendChild(bubble);
 
     body.appendChild(wrapper);
@@ -710,8 +790,11 @@
     if (!text) return;
 
     input.value = '';
+    sessionStorage.removeItem(currentDraftKey());
+    autoResizeInput();
     state.history.push({ role: 'user', content: text });
     appendBubble('user', text);
+    updateSendState();
 
     state.busy = true;
     const sendBtn = document.getElementById('byoai-btn-send');
@@ -734,7 +817,25 @@
     } finally {
       state.busy = false;
       if (sendBtn) sendBtn.disabled = false;
+      updateSendState();
     }
+  }
+
+  function autoResizeInput() {
+    const input = document.getElementById('byoai-input');
+    if (!input) return;
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
+  }
+
+  function updateSendState() {
+    const input = document.getElementById('byoai-input');
+    const sendBtn = document.getElementById('byoai-btn-send');
+    if (!input || !sendBtn) return;
+    const disabled = state.busy || input.value.trim().length === 0;
+    sendBtn.disabled = disabled;
+    sendBtn.style.opacity = disabled ? '0.55' : '1';
+    sendBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
   }
 
   // ── Toggle button ─────────────────────────────────────────────────────────
@@ -773,6 +874,7 @@
   // ── State & panel lifecycle ───────────────────────────────────────────────
 
   const state = {
+    backdropEl:   null,
     panelEl:      null,
     open:         false,
     settingsOpen: false,
@@ -781,12 +883,50 @@
     busy:         false,
   };
 
+  function closePanel() {
+    state.open = false;
+    state.panelEl.style.transform = 'translateX(100%)';
+    state.panelEl.setAttribute('aria-hidden', 'true');
+    if (state.backdropEl) {
+      state.backdropEl.style.opacity = '0';
+      state.backdropEl.style.pointerEvents = 'none';
+      state.backdropEl.setAttribute('aria-hidden', 'true');
+    }
+    const toggleBtn = document.getElementById('byoai-toggle');
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
+      toggleBtn.focus();
+    }
+  }
+
+  function trapFocus(e) {
+    if (!state.open || !state.panelEl || e.key !== 'Tab') return;
+    const focusable = state.panelEl.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   function togglePanel() {
     if (!state.panelEl) initPanel();
 
     state.open = !state.open;
     state.panelEl.style.transform = state.open ? 'translateX(0)' : 'translateX(100%)';
     state.panelEl.setAttribute('aria-hidden', state.open ? 'false' : 'true');
+    if (state.backdropEl) {
+      state.backdropEl.style.opacity = state.open ? '1' : '0';
+      state.backdropEl.style.pointerEvents = state.open ? 'auto' : 'none';
+      state.backdropEl.setAttribute('aria-hidden', state.open ? 'false' : 'true');
+    }
 
     const toggleBtn = document.getElementById('byoai-toggle');
     if (toggleBtn) {
@@ -811,19 +951,13 @@
   }
 
   function initPanel() {
+    state.backdropEl = buildBackdrop();
+    document.body.appendChild(state.backdropEl);
     state.panelEl = buildPanel();
     document.body.appendChild(state.panelEl);
 
     document.getElementById('byoai-btn-close').addEventListener('click', () => {
-      state.open = false;
-      state.panelEl.style.transform = 'translateX(100%)';
-      state.panelEl.setAttribute('aria-hidden', 'true');
-      const toggleBtn = document.getElementById('byoai-toggle');
-      if (toggleBtn) {
-        toggleBtn.setAttribute('aria-expanded', 'false');
-        toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
-        toggleBtn.focus();
-      }
+      closePanel();
     });
 
     document.getElementById('byoai-btn-settings').addEventListener('click', () => {
@@ -838,7 +972,17 @@
 
     document.getElementById('byoai-btn-send').addEventListener('click', sendMessage);
 
-    document.getElementById('byoai-input').addEventListener('keydown', e => {
+    const input = document.getElementById('byoai-input');
+    const draft = sessionStorage.getItem(currentDraftKey());
+    if (draft) input.value = draft;
+    autoResizeInput();
+    updateSendState();
+    input.addEventListener('input', () => {
+      sessionStorage.setItem(currentDraftKey(), input.value);
+      autoResizeInput();
+      updateSendState();
+    });
+    input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
 
@@ -846,22 +990,22 @@
       state.history = [];
       loadContextAndGreet();
     });
+    document.getElementById('byoai-btn-clear-chat').addEventListener('click', () => {
+      if (!confirm('Clear this chat history?')) return;
+      state.history = state.history.filter(m => m.role === 'system');
+      renderChat();
+      const inputEl = document.getElementById('byoai-input');
+      inputEl?.focus();
+    });
   }
 
   // ── Keyboard: Escape closes panel ────────────────────────────────────────
 
   document.addEventListener('keydown', e => {
+    trapFocus(e);
     if (e.key === 'Escape' && state.open) {
       e.preventDefault();
-      state.open = false;
-      state.panelEl.style.transform = 'translateX(100%)';
-      state.panelEl.setAttribute('aria-hidden', 'true');
-      const toggleBtn = document.getElementById('byoai-toggle');
-      if (toggleBtn) {
-        toggleBtn.setAttribute('aria-expanded', 'false');
-        toggleBtn.setAttribute('aria-label', 'Open AI Facilitator');
-        toggleBtn.focus();
-      }
+      closePanel();
     }
   });
 
