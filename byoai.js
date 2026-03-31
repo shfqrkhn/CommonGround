@@ -354,21 +354,42 @@
   // ── Design tokens ─────────────────────────────────────────────────────────
 
   const C = {
-    bg:         '#1a1f2e',
-    bgL:        '#252b3d',
-    bgLL:       '#2d3450',
-    border:     '#3a4260',
-    accent:     '#4f8ef7',
-    accentH:    '#6ba3ff',
-    text:       '#e8eaf0',
-    muted:      '#8892b0',
-    error:      '#d9534f',
-    userBg:     '#2d3450',
-    aiBg:       '#1e3a5f',
+    bg:         'rgba(20, 24, 39, 0.65)',
+    bgL:        'rgba(37, 43, 61, 0.65)',
+    bgLL:       'rgba(45, 52, 80, 0.75)',
+    border:     'rgba(255, 255, 255, 0.1)',
+    accent:     'linear-gradient(135deg, #4f8ef7 0%, #7b5ea7 100%)',
+    accentH:    'linear-gradient(135deg, #6ba3ff 0%, #906ed2 100%)',
+    text:       '#f8f9fc',
+    muted:      'rgba(255, 255, 255, 0.65)',
+    error:      '#ff6b6b',
+    userBg:     'linear-gradient(135deg, rgba(45, 52, 80, 0.5) 0%, rgba(45, 52, 80, 0.8) 100%)',
+    aiBg:       'linear-gradient(135deg, rgba(79, 142, 247, 0.15) 0%, rgba(123, 94, 167, 0.15) 100%)',
   };
 
-  const inputCSS = `width:100%;padding:8px 10px;border-radius:6px;border:1px solid ${C.border};background:${C.bgLL};color:${C.text};font-size:13px;box-sizing:border-box;`;
-  const btnCSS   = `display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;touch-action:manipulation;`;
+  const inputCSS = `width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.25);color:${C.text};font-size:14px;box-sizing:border-box;transition:all 0.25s ease;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);`;
+  const btnCSS   = `display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);cursor:pointer;font-size:13.5px;font-weight:600;touch-action:manipulation;transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);`;
+
+  // Inject Custom Styles to make the app & overlay maximally joyful
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = `
+    /* BYOAI Premium UI */
+    #byoai-panel { backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
+    .byoai-btn:hover { transform: translateY(-2px); filter: brightness(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .byoai-btn:active { transform: translateY(1px); filter: brightness(0.95); box-shadow: none; }
+    .byoai-input:focus { border-color: #4f8ef7; box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.25); outline: none; }
+    #byoai-body::-webkit-scrollbar { width: 6px; }
+    #byoai-body::-webkit-scrollbar-track { background: transparent; }
+    #byoai-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 6px; }
+    #byoai-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+    @keyframes byoaiFadeIn { from { opacity: 0; transform: translateY(12px); filter: blur(4px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+    .byoai-msg { animation: byoaiFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes byoaiPulse { 0%, 100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); filter: brightness(1.2); } }
+    .byoai-typing-dot { animation: byoaiPulse 1.4s infinite ease-in-out; }
+    
+    /* Global App Aesthetics Polish (moved to index.html for native loading) */
+  `;
+  document.head.appendChild(styleEl);
 
   // ── Panel DOM ─────────────────────────────────────────────────────────────
 
@@ -380,37 +401,37 @@
     el.setAttribute('aria-label', 'AI Facilitator');
     el.setAttribute('aria-hidden', 'true');
     el.style.cssText = `
-      position:fixed;inset:0 0 0 auto;width:min(400px,100vw);
+      position:fixed;inset:0 0 0 auto;width:min(420px,100vw);
       background:${C.bg};border-left:1px solid ${C.border};
       display:flex;flex-direction:column;z-index:99999;
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-      color:${C.text};box-shadow:-4px 0 32px rgba(0,0,0,0.5);
-      transform:translateX(100%);${reducedMotion ? '' : 'transition:transform 0.25s ease;'}
+      font-family:'Inter',system-ui,-apple-system,sans-serif;
+      color:${C.text};box-shadow:-8px 0 40px rgba(0,0,0,0.6);
+      transform:translateX(100%);${reducedMotion ? '' : 'transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);'}
     `;
     el.innerHTML = `
-      <div style="padding:max(13px,env(safe-area-inset-top,0px)) 14px 13px;border-bottom:1px solid ${C.border};
-                  display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <span aria-hidden="true" style="font-size:18px;">🤝</span>
-        <span style="font-weight:700;font-size:14px;flex:1;letter-spacing:0.01em;">AI Facilitator</span>
-        <button id="byoai-btn-settings" aria-label="Settings"
-          style="${btnCSS}background:transparent;color:${C.muted};padding:5px 9px;">⚙</button>
-        <button id="byoai-btn-close" aria-label="Close panel"
-          style="${btnCSS}background:transparent;color:${C.muted};padding:5px 9px;">✕</button>
+      <div style="padding:max(16px,env(safe-area-inset-top,0px)) 16px 14px;border-bottom:1px solid ${C.border};
+                  display:flex;align-items:center;gap:10px;flex-shrink:0;background:rgba(255,255,255,0.02);">
+        <span aria-hidden="true" style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🤝</span>
+        <span style="font-weight:700;font-size:15px;flex:1;letter-spacing:0.02em;">AI Facilitator</span>
+        <button id="byoai-btn-settings" class="byoai-btn" aria-label="Settings"
+          style="${btnCSS}background:transparent;color:${C.muted};padding:6px 10px;font-size:15px;">⚙</button>
+        <button id="byoai-btn-close" class="byoai-btn" aria-label="Close panel"
+          style="${btnCSS}background:transparent;color:${C.muted};padding:6px 10px;font-size:15px;">✕</button>
       </div>
-      <div id="byoai-body" style="flex:1;overflow-y:auto;padding:12px;
-           display:flex;flex-direction:column;gap:8px;" role="log" aria-live="polite"></div>
-      <div id="byoai-footer" style="padding:10px 12px max(10px,env(safe-area-inset-bottom,0px)) 12px;border-top:1px solid ${C.border};
-           display:flex;gap:8px;flex-shrink:0;align-items:flex-end;">
-        <textarea id="byoai-input" rows="2" placeholder="Ask the AI facilitator…"
+      <div id="byoai-body" style="flex:1;overflow-y:auto;padding:16px;
+           display:flex;flex-direction:column;gap:12px;" role="log" aria-live="polite"></div>
+      <div id="byoai-footer" style="padding:12px 16px max(14px,env(safe-area-inset-bottom,0px)) 16px;border-top:1px solid ${C.border};
+           display:flex;gap:10px;flex-shrink:0;align-items:flex-end;background:rgba(255,255,255,0.01);">
+        <textarea id="byoai-input" class="byoai-input" rows="1" placeholder="Ask the AI facilitator…"
           aria-label="Message to AI facilitator"
-          style="${inputCSS}resize:none;flex:1;line-height:1.4;"></textarea>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <button id="byoai-btn-send" aria-label="Send message"
-            style="${btnCSS}background:${C.accent};color:#fff;padding:8px 12px;">▶</button>
-          <button id="byoai-btn-clear-chat" aria-label="Clear chat" title="Clear chat history"
-            style="${btnCSS}background:${C.bgLL};color:${C.muted};padding:5px 9px;font-size:11px;">🧹</button>
-          <button id="byoai-btn-refresh" aria-label="Refresh context" title="Refresh context from app data"
-            style="${btnCSS}background:${C.bgLL};color:${C.muted};padding:5px 9px;font-size:11px;">↻</button>
+          style="${inputCSS}resize:none;flex:1;line-height:1.5;max-height:140px;overflow-y:auto;"></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button id="byoai-btn-send" class="byoai-btn" aria-label="Send message"
+            style="${btnCSS}background:${C.accent};color:#fff;padding:10px 14px;box-shadow:0 4px 12px rgba(79,142,247,0.3);">▶</button>
+          <button id="byoai-btn-clear-chat" class="byoai-btn" aria-label="Clear chat" title="Clear chat history"
+            style="${btnCSS}background:rgba(255,255,255,0.05);color:${C.muted};padding:6px;font-size:12px;">🧹</button>
+          <button id="byoai-btn-refresh" class="byoai-btn" aria-label="Refresh context" title="Refresh context from app data"
+            style="${btnCSS}background:rgba(255,255,255,0.05);color:${C.muted};padding:6px;font-size:12px;">↻</button>
         </div>
       </div>
     `;
@@ -475,7 +496,7 @@
         <label style="display:block;margin-bottom:5px;font-size:12px;color:${C.muted};font-weight:500;" for="byoai-inp-endpoint">
           Base URL <span style="font-weight:400;">(OpenAI-compatible)</span>
         </label>
-        <input type="url" id="byoai-inp-endpoint"
+        <input type="url" id="byoai-inp-endpoint" class="byoai-input"
           placeholder="https://api.openai.com/v1"
           style="${inputCSS}" />
         <p style="margin:5px 0 0;font-size:11px;color:${C.muted};">
@@ -483,12 +504,12 @@
         </p>
       </div>
 
-      <button id="byoai-btn-save"
-        style="${btnCSS}background:${C.accent};color:#fff;width:100%;margin-top:4px;">
+      <button id="byoai-btn-save" class="byoai-btn"
+        style="${btnCSS}background:${C.accent};color:#fff;width:100%;margin-top:4px;box-shadow:0 4px 16px rgba(79,142,247,0.25);">
         Save &amp; Start
       </button>
-      <button id="byoai-btn-clear"
-        style="${btnCSS}background:transparent;color:${C.error};width:100%;margin-top:8px;border:1px solid ${C.error};">
+      <button id="byoai-btn-clear" class="byoai-btn"
+        style="${btnCSS}background:rgba(255,107,107,0.1);color:${C.error};width:100%;margin-top:8px;border:1px solid rgba(255,107,107,0.3);">
         Clear Saved Key
       </button>
     `;
@@ -654,8 +675,9 @@
     for (const { label, prompt } of QUICK_PROMPTS) {
       const btn = document.createElement('button');
       btn.type = 'button';
+      btn.className = 'byoai-btn';
       btn.setAttribute('aria-label', prompt);
-      btn.style.cssText = `${btnCSS}background:${C.bgLL};color:${C.text};border:1px solid ${C.border};padding:7px 10px;text-align:left;`;
+      btn.style.cssText = `${btnCSS}background:rgba(255,255,255,0.03);color:${C.text};padding:8px 12px;text-align:left;border-radius:8px;font-weight:500;font-size:13px;`;
       btn.textContent = label;
       btn.addEventListener('click', () => {
         const input = document.getElementById('byoai-input');
@@ -703,6 +725,7 @@
     }
 
     const bubble = document.createElement('div');
+    bubble.className = 'byoai-msg';
     bubble.style.cssText = `
       padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.55;
       background:${isAI ? C.aiBg : C.userBg};border:1px solid ${C.border};
@@ -724,9 +747,10 @@
     if (!body) return;
     const el = document.createElement('div');
     el.id = 'byoai-typing';
+    el.className = 'byoai-msg';
     el.setAttribute('aria-live', 'polite');
-    el.style.cssText = `font-size:12px;color:${C.muted};padding:6px 8px;`;
-    el.textContent = 'AI Facilitator is thinking…';
+    el.style.cssText = `font-size:13px;color:${C.muted};padding:8px 12px;display:flex;align-items:center;gap:6px;`;
+    el.innerHTML = `AI Facilitator is thinking <div class="byoai-typing-dot" style="width:6px;height:6px;border-radius:50%;background:${C.muted};"></div><div class="byoai-typing-dot" style="width:6px;height:6px;border-radius:50%;background:${C.muted};animation-delay:0.2s"></div><div class="byoai-typing-dot" style="width:6px;height:6px;border-radius:50%;background:${C.muted};animation-delay:0.4s"></div>`;
     body.appendChild(el);
     body.scrollTop = body.scrollHeight;
   }
@@ -849,12 +873,12 @@
     btn.setAttribute('title', 'AI Facilitator');
     btn.style.cssText = `
       position:fixed;bottom:calc(22px + env(safe-area-inset-bottom,0px));right:calc(22px + env(safe-area-inset-right,0px));z-index:99998;
-      width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+      width:56px;height:56px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);cursor:pointer;
       background:linear-gradient(135deg,#4f8ef7 0%,#7b5ea7 100%);
-      color:#fff;font-size:22px;
-      box-shadow:0 4px 16px rgba(79,142,247,0.45);
+      color:#fff;font-size:24px;
+      box-shadow:0 8px 24px rgba(79,142,247,0.35);backdrop-filter:blur(8px);
       touch-action:manipulation;display:flex;align-items:center;justify-content:center;
-      ${reducedMotion ? '' : 'transition:transform 0.15s ease,box-shadow 0.15s ease;'}
+      ${reducedMotion ? '' : 'transition:transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),box-shadow 0.3s ease;'}
     `;
     btn.textContent = '🤝';
     if (!reducedMotion) {

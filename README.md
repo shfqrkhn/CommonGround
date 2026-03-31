@@ -1,84 +1,52 @@
-# COMMONGROUND Suite
+# 🤝 CommonGround Suite
 
-**Facilitator-first human-systems resolution suite. Resolve clearly.**
+> **Facilitator-first human-systems resolution suite. Resolve clearly.**
 
-A local-first, offline-capable progressive web app for preparing, facilitating, and documenting structured conflict-resolution and team-conversation workflows — with zero backend, zero accounts, and no data leaving your device.
+[![App Screenshot](./screenshot-app.png)](https://shfqrkhn.github.io/CommonGround/)
 
----
-
-## Live App
-
-**[https://shfqrkhn.github.io/CommonGround/](https://shfqrkhn.github.io/CommonGround/)**
-
-![App Screenshot](./screenshot-app.png)
-
-Works in any modern browser. No installation required. Can be installed as a standalone app from your browser's address bar.
+Welcome to **CommonGround**, a private, structured workspace designed specifically for facilitators to manage the full arc of conflict resolution, negotiations, team health, performance conversations, and change management. 
 
 ---
 
-## For End Users
+## 🌟 The Core Value Proposition
 
-### What It Does
+CommonGround Suite empowers facilitators with a dedicated, professional environment to organize unstructured human challenges into clear, actionable workflows. It acts as your secure digital hub to guide the complex process of human-systems resolution from intake to complete resolution, ensuring nothing falls through the cracks.
 
-COMMONGROUND Suite gives facilitators a private, structured workspace to manage the full arc of a resolution or conversation:
+## 🔒 Offline & Privacy Guarantees
 
-| Step | What you do |
-|------|-------------|
-| **Workspace** | Create a named workspace for your practice |
-| **Matter** | Open a matter and set its type (conflict, negotiation, team health, performance conversation, change facilitation) |
-| **Suitability** | Run a mandatory suitability screen — safety and route-out triggers surface first |
-| **Intake** | Capture participant context with visibility controls (private or facilitator-only) |
-| **Issue Map** | Build a structured issue map with priority levels |
-| **Sessions** | Record agenda, notes, and facilitation phase for each session |
-| **Commitments** | Track owner, due date, and status for every commitment made |
-| **Follow-ups** | Schedule and complete follow-up checkpoints |
-| **Packs** | Generate specialist briefings — Negotiation, Team Health, Performance Conversation, Change Facilitation |
-| **Export** | Download a full archive packet as a portable JSON bundle |
+Your data belongs exclusively to you. We've built CommonGround with a strict **100% offline-first sovereign architecture**:
+- **Zero Servers & Zero Telemetry:** There are no backend databases, no accounts, and absolutely no telemetry. 
+- **Absolute Privacy:** Everything is stored directly in your device's local browser storage. Your sensitive facilitation data **never** leaves your device.
+- **Zero Cloud Lock-in:** You can export or destroy your entire workspace at any time.
 
-### Data & Privacy
+## ✨ Key Features
 
-- **Nothing leaves your device.** All data is stored in your browser's local IndexedDB storage.
-- There is no server, no account, no sync, and no telemetry of any kind.
-- **Back up your data:** Settings → Export → downloads a portable `.json` file.
-- **Restore your data:** Settings → Import → loads any previously exported bundle.
-- **Wipe everything:** Settings → Factory Reset → clears all local data permanently.
+- **Structured Workspaces & Matters:** Create named workspaces and open matters for conflict, negotiation, team health, or change facilitation.
+- **Suitability Screening:** Mandatory non-skippable safety gates surface route-out triggers early, ensuring high-integrity risk screening before any engagement.
+- **Dynamic Issue Mapping:** Build clear, structured issue maps with priority levels.
+- **Session & Commitment Tracking:** Record agendas and track owner, due dates, and statuses for every commitment made during your sessions.
+- **Specialist Briefing Packs:** Automatically generate specialist briefings for your specific matter type.
+- **Portable JSON Backups:** Securely download a full archive packet of your workspace as a portable JSON bundle.
+- **BYOAI Facilitator Overlay:** Bring your own AI for an optional, fully additive intelligent facilitator companion.
+- **Beautiful, Native-like Interface:** A seamless, responsive PWA interface that functions perfectly entirely offline and works everywhere.
 
-### Offline Use
+## 🚀 Getting Started & Best Practices
 
-After your first visit the app works fully offline. If you install it from your browser (look for the install prompt or "Add to Home Screen"), it behaves like a native app with no browser chrome.
+### 1. Launch the App
+No installation, no downloads, no accounts required! Simply visit the live URL:
+👉 **[Launch CommonGround Suite](https://shfqrkhn.github.io/CommonGround/)**
 
-### Browser Support
+### 2. Install as a PWA (Recommended)
+For the best native-like experience and guaranteed offline availability:
+- **Desktop:** Open the link in Chrome/Edge and click the "Install" icon in the address bar.
+- **Mobile:** Open the link in Safari/Chrome and tap **Share → Add to Home Screen**.
 
-Any modern browser with IndexedDB and Service Worker support: Chrome, Edge, Firefox, Safari (iOS 16.4+), and all Chromium-based browsers.
-
----
-
-## For Developers
-
-### Architecture
-
-| Layer | Technology |
-|-------|-----------|
-| Build | Vite 8 + TypeScript 5 (strict, ES2023) |
-| Storage | IndexedDB — 9 stores, versioned schema, forward-safe migration runner |
-| Large artifacts | OPFS (Origin Private File System) |
-| Offline | vite-plugin-pwa / Workbox — auto-update, full precache |
-| Tests | Vitest + fake-indexeddb — 116 tests, 95%+ statement coverage, core services at 100% |
-| Hosting | GitHub Pages — fully static, no server required |
-
-### Design Principles
-
-- **Sovereign** — no backend dependency, no CDN runtime, no external calls in production.
-- **Atomic changes** — every service function is independently testable and side-effect bounded.
-- **Strict CSP** — base app remains self-hosted; `connect-src` permits `https:` only for optional BYOAI provider calls; no eval.
-- **Accessible** — WCAG 2.1 AA: keyboard navigable, screen-reader semantic, reduced-motion safe.
-
-### This Repository
-
-This repository is the **compiled distribution root** of COMMONGROUND Suite (the files served by GitHub Pages). The source code, test suite, and build toolchain live in the separate source repository.
+### 3. ⚠️ Critical Data Management Advice
+Because CommonGround stores data *only* on your device, **clearing your browser's site data or history will erase your workspaces permanently.** 
+- **Back Up Frequently:** Go to **Settings → Export** to download a portable `.json` backup of your data. Store this file safely.
+- **Restore Anywhere:** Use **Settings → Import** to reload your snapshot on any device.
+- **Full Control:** Use **Settings → Factory Reset** when you need to wipe your device thoroughly.
 
 ---
-
-## Version
-
-`v0.1.125`
+*Current Release: `version 0.1.125`* 
+*Browser Support: Chrome, Edge, Firefox, Safari (iOS 16.4+).*
