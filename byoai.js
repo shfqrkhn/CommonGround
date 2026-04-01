@@ -375,13 +375,15 @@
   styleEl.innerHTML = `
     /* BYOAI Premium UI */
     #byoai-panel { backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
-    .byoai-btn:hover { transform: translateY(-2px); filter: brightness(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    @media (hover: hover) {
+      .byoai-btn:hover { transform: translateY(-2px); filter: brightness(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+      #byoai-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+    }
     .byoai-btn:active { transform: translateY(1px); filter: brightness(0.95); box-shadow: none; }
     .byoai-input:focus { border-color: #4f8ef7; box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.25); outline: none; }
     #byoai-body::-webkit-scrollbar { width: 6px; }
     #byoai-body::-webkit-scrollbar-track { background: transparent; }
     #byoai-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 6px; }
-    #byoai-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
     @keyframes byoaiFadeIn { from { opacity: 0; transform: translateY(12px); filter: blur(4px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
     .byoai-msg { animation: byoaiFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes byoaiPulse { 0%, 100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); filter: brightness(1.2); } }

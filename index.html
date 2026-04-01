@@ -73,10 +73,13 @@
       }
       
       /* Joyful Interactive Elements */
-      button:hover, [role="button"]:hover, a.button:hover {
-        transform: translateY(-2px) !important;
-        filter: brightness(1.15) !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 12px rgba(79, 142, 247, 0.15) !important;
+      @media (hover: hover) {
+        button:hover, [role="button"]:hover, a.button:hover {
+          transform: translateY(-2px) !important;
+          filter: brightness(1.15) !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 12px rgba(79, 142, 247, 0.15) !important;
+        }
+        a:hover { filter: brightness(1.2) !important; }
       }
       button:active, [role="button"]:active, a.button:active {
         transform: translateY(1px) !important;
@@ -84,7 +87,6 @@
         filter: brightness(0.95) !important;
       }
       a { transition: color 0.2s ease !important; }
-      a:hover { filter: brightness(1.2) !important; }
       
       /* Input & Form Styling (Responsive & Intuitive) */
       input, textarea, select {
