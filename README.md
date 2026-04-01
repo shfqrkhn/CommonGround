@@ -48,5 +48,5 @@ Because CommonGround stores data *only* on your device, **clearing your browser'
 - **Full Control:** Use **Settings → Factory Reset** when you need to wipe your device thoroughly.
 
 ---
-*Current Release: `version 0.1.126`*
+*Current Release: `version 0.1.127`*
 *Browser Support: Chrome, Edge, Firefox, Safari (iOS 16.4+).*
