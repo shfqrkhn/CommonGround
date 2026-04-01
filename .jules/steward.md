@@ -138,3 +138,6 @@ Omitting either change causes the other to partially break: a plain-text prompt 
 
 ## 2026-03-28 - [🛡️ Sentinel] - [No Sparse Workbox Precache Arrays]
 **Protocol:** `precacheAndRoute([...])` arrays in `sw.js` must not contain sparse slots (e.g., `,,`). Keep every entry explicit object literals so Workbox receives deterministic manifest items.
+
+## 2026-03-28 - [🎨 Palette] - [Sticky Hovers on Touch Devices]
+**Protocol:** Interactive elements with `:hover` pseudo-classes (e.g., `.btn:hover`, `.chip:hover`) can become "stuck" in their hover state after a user taps on them on touch devices (mobile phones, tablets). This happens because iOS/Android browsers simulate a hover state during a tap, and do not remove it until another element is tapped. Fix: Wrap all purely visual `:hover` rules within a media query checking for pointer support: `@media (hover: hover) { ...:hover { ... } }`. This ensures hover styles (like background colors or box-shadows that make elements look "raised") are only applied on devices that actually support hovering. Compound selectors containing `:hover` and non-hover states (like `.chip:hover, .chip-active`) must be split so the non-hover state remains universally applied.
